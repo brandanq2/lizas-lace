@@ -12,12 +12,14 @@ export default function Hero() {
 
       <div className="relative z-10 flex flex-col items-center text-center max-w-2xl">
         {/* Logo */}
-        <div className="mb-8">
+        <div
+          className="mb-8 w-56 h-56 md:w-72 md:h-72 rounded-full overflow-hidden shadow-lg bg-white flex-shrink-0"
+          style={{ boxShadow: '0 4px 32px 0 #D4A0A022' }}
+        >
           <img
             src="/logo.jpeg"
             alt="Liza's Lace logo"
-            className="w-56 h-56 md:w-72 md:h-72 object-contain rounded-full shadow-lg"
-            style={{ boxShadow: '0 4px 32px 0 #D4A0A022' }}
+            className="w-full h-full object-contain"
           />
         </div>
 
