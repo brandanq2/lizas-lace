@@ -1,15 +1,16 @@
-import Navbar from './components/Navbar'
-import Hero from './components/Hero'
-import Footer from './components/Footer'
+import Navbar from './components/Navbar/Navbar'
+import Hero from './components/Hero/Hero'
+import Footer from './components/Footer/Footer'
+import { PageWrapper, Main } from './App.styles'
 
 export default function App() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <PageWrapper>
       <Navbar />
-      <main className="flex-1">
+      <Main>
         <Hero />
-      </main>
+      </Main>
       <Footer />
-    </div>
+    </PageWrapper>
   )
 }
