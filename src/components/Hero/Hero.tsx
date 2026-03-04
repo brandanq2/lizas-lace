@@ -21,7 +21,7 @@ export default function Hero() {
           <LogoImg src="/logo.jpeg" alt="Liza's Lace logo" />
         </LogoWrapper>
         <BrandName>Liza's Lace</BrandName>
-        <Tagline>Vintage Wears by Brigitte Murphy</Tagline>
+        <Tagline>By Brigitte Katherine Quinn</Tagline>
         <Divider>
           <DividerLine />
           <DividerIcon
