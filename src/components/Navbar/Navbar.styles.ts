@@ -1,4 +1,5 @@
 import styled, { css } from 'styled-components'
+import { NavLink } from 'react-router-dom'
 
 export const Nav = styled.nav<{ $scrolled: boolean }>`
   position: fixed;
@@ -32,9 +33,10 @@ export const NavInner = styled.div`
 export const NavGroup = styled.div`
   display: flex;
   gap: 1.5rem;
+  align-items: center;
 `
 
-export const NavLink = styled.a`
+const navLinkStyles = css`
   font-family: ${({ theme }) => theme.fonts.serif};
   font-size: 0.875rem;
   letter-spacing: 0.1em;
@@ -43,12 +45,17 @@ export const NavLink = styled.a`
   text-decoration: none;
   transition: color 200ms;
 
-  &:hover {
+  &:hover,
+  &.active {
     color: ${({ theme }) => theme.colors.taupeDark};
   }
 `
 
-export const BrandLink = styled.a`
+export const NavRouterLink = styled(NavLink)`
+  ${navLinkStyles}
+`
+
+export const BrandRouterLink = styled(NavLink)`
   font-family: ${({ theme }) => theme.fonts.cursive};
   font-size: 1.875rem;
   color: ${({ theme }) => theme.colors.taupeDark};
@@ -61,12 +68,37 @@ export const BrandLink = styled.a`
   }
 `
 
-export const DisabledNav = styled.span`
+export const CartButton = styled.button`
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: ${({ theme }) => theme.colors.taupe};
+  display: flex;
+  align-items: center;
+  transition: color 200ms;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.taupeDark};
+  }
+`
+
+export const CartBadge = styled.span`
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  background: ${({ theme }) => theme.colors.blush};
+  color: ${({ theme }) => theme.colors.taupeDark};
   font-family: ${({ theme }) => theme.fonts.serif};
-  font-size: 0.875rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: ${({ theme }) => theme.colors.taupe}66;
-  cursor: default;
-  user-select: none;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  pointer-events: none;
 `
