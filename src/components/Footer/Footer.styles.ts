@@ -64,3 +64,88 @@ export const IgIcon = styled.svg`
   width: 1.25rem;
   height: 1.25rem;
 `
+
+export const NewsletterSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+`
+
+export const NewsletterHeading = styled.p`
+  font-family: ${({ theme }) => theme.fonts.cursive};
+  font-size: 1.25rem;
+  color: ${({ theme }) => theme.colors.blushLight};
+  letter-spacing: 0.025em;
+`
+
+export const NewsletterSubtext = styled.p`
+  font-family: ${({ theme }) => theme.fonts.serif};
+  font-size: 0.8rem;
+  color: ${({ theme }) => theme.colors.laceWhite}99;
+  letter-spacing: 0.05em;
+`
+
+export const NewsletterForm = styled.form`
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 26rem;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
+`
+
+export const NewsletterInput = styled.input`
+  flex: 1;
+  padding: 0.6rem 1rem;
+  background: ${({ theme }) => theme.colors.laceWhite}1A;
+  border: 1px solid ${({ theme }) => theme.colors.blush}55;
+  border-radius: 2px;
+  color: ${({ theme }) => theme.colors.laceWhite};
+  font-family: ${({ theme }) => theme.fonts.serif};
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 200ms;
+
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.laceWhite}55;
+  }
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.blush};
+  }
+`
+
+export const NewsletterButton = styled.button`
+  padding: 0.6rem 1.25rem;
+  background: ${({ theme }) => theme.colors.blush};
+  color: ${({ theme }) => theme.colors.taupeDark};
+  border: none;
+  border-radius: 2px;
+  font-family: ${({ theme }) => theme.fonts.serif};
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 200ms;
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.blushLight};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+`
+
+export const NewsletterFeedback = styled.p<{ $error?: boolean }>`
+  font-family: ${({ theme }) => theme.fonts.serif};
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  color: ${({ theme, $error }) => $error ? '#e07070' : theme.colors.blushLight};
+`
