@@ -9,7 +9,7 @@ export const theme = {
     white: '#ffffff',
   },
   fonts: {
-    cursive: '"Dancing Script", cursive',
+    cursive: '"Great Vibes", cursive',
     serif: '"Cormorant Garamond", Georgia, serif',
   },
 }

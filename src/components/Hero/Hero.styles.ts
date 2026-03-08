@@ -53,9 +53,10 @@ export const LogoImg = styled.img`
 export const BrandName = styled.h1`
   font-family: ${({ theme }) => theme.fonts.cursive};
   font-size: 3rem;
+  font-weight: 400;
   color: ${({ theme }) => theme.colors.taupeDark};
   margin-bottom: 0.75rem;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.05em;
   line-height: 1.25;
 
   @media (min-width: 768px) {

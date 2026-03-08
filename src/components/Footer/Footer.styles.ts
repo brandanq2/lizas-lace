@@ -19,7 +19,8 @@ export const Inner = styled.div`
 export const BrandName = styled.h2`
   font-family: ${({ theme }) => theme.fonts.cursive};
   font-size: 2.25rem;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.05em;
+  font-weight: 400;
   color: ${({ theme }) => theme.colors.blushLight};
 `
 
