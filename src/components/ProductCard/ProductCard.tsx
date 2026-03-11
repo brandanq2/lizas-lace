@@ -8,6 +8,9 @@ import {
   ProductImage,
   NoImage,
   SoldOutBadge,
+  ArrowButton,
+  Dots,
+  Dot,
   CardBody,
   ProductTitle,
   ProductPrice,
@@ -21,11 +24,24 @@ interface Props {
 export default function ProductCard({ product }: Props) {
   const { addItem, isLoading } = useCart()
   const [adding, setAdding] = useState(false)
+  const [imgIndex, setImgIndex] = useState(0)
 
   const firstVariant = product.variants.edges[0]?.node
   const isSoldOut = !firstVariant?.availableForSale
   const price = firstVariant?.price ?? product.priceRange.minVariantPrice
-  const image = product.featuredImage
+
+  const images = product.images.edges.map(e => e.node)
+  const hasMultiple = images.length > 1
+
+  function prev(e: React.MouseEvent) {
+    e.stopPropagation()
+    setImgIndex(i => (i - 1 + images.length) % images.length)
+  }
+
+  function next(e: React.MouseEvent) {
+    e.stopPropagation()
+    setImgIndex(i => (i + 1) % images.length)
+  }
 
   async function handleAddToBag() {
     if (!firstVariant || isSoldOut) return
@@ -37,12 +53,29 @@ export default function ProductCard({ product }: Props) {
   return (
     <Card>
       <ImageWrapper>
-        {image ? (
-          <ProductImage src={image.url} alt={image.altText ?? product.title} loading="lazy" />
-        ) : (
+        {images.length > 0 ? images.map((img, i) => (
+          <ProductImage
+            key={img.url}
+            src={img.url}
+            alt={img.altText ?? product.title}
+            loading="lazy"
+            $visible={i === imgIndex}
+          />
+        )) : (
           <NoImage>No image</NoImage>
         )}
         {isSoldOut && <SoldOutBadge>Sold Out</SoldOutBadge>}
+        {hasMultiple && (
+          <>
+            <ArrowButton $side="left" onClick={prev} aria-label="Previous image">&#8249;</ArrowButton>
+            <ArrowButton $side="right" onClick={next} aria-label="Next image">&#8250;</ArrowButton>
+            <Dots>
+              {images.map((_, i) => (
+                <Dot key={i} $active={i === imgIndex} onClick={e => { e.stopPropagation(); setImgIndex(i) }} />
+              ))}
+            </Dots>
+          </>
+        )}
       </ImageWrapper>
 
       <CardBody>

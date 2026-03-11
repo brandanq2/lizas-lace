@@ -22,11 +22,14 @@ export const ImageWrapper = styled.div`
   overflow: hidden;
 `
 
-export const ProductImage = styled.img`
+export const ProductImage = styled.img<{ $visible?: boolean }>`
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 400ms ease;
+  opacity: ${({ $visible }) => ($visible === false ? 0 : 1)};
+  transition: opacity 500ms ease, transform 400ms ease;
 
   ${Card}:hover & {
     transform: scale(1.03);
@@ -42,6 +45,58 @@ export const NoImage = styled.div`
   color: ${({ theme }) => theme.colors.taupe}88;
   font-family: ${({ theme }) => theme.fonts.serif};
   font-size: 0.875rem;
+`
+
+export const ArrowButton = styled.button<{ $side: 'left' | 'right' }>`
+  position: absolute;
+  top: 50%;
+  ${({ $side }) => $side}: 0.5rem;
+  transform: translateY(-50%);
+  background: rgba(255, 253, 249, 0.85);
+  border: none;
+  color: ${({ theme }) => theme.colors.taupeDark};
+  font-size: 1.75rem;
+  line-height: 1;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 200ms;
+  padding: 0;
+  z-index: 2;
+
+  ${ImageWrapper}:hover & {
+    opacity: 1;
+  }
+
+  &:hover {
+    background: rgba(255, 253, 249, 1);
+  }
+`
+
+export const Dots = styled.div`
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.375rem;
+  z-index: 2;
+`
+
+export const Dot = styled.button<{ $active: boolean }>`
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: ${({ theme, $active }) =>
+    $active ? theme.colors.taupeDark : 'rgba(255,253,249,0.7)'};
+  transition: background 200ms;
 `
 
 export const SoldOutBadge = styled.span`
