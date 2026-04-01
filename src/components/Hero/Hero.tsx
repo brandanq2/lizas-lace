@@ -18,7 +18,7 @@ export default function Hero() {
       <BlushGlow />
       <Content>
         <LogoWrapper>
-          <LogoImg src="/logo.jpeg" alt="Liza's Lace logo" />
+          <LogoImg src="/cover.jpeg" alt="Liza's Lace" />
         </LogoWrapper>
         <BrandName>Liza's Lace</BrandName>
         <Tagline>By Brigitte Katherine Quinn</Tagline>

@@ -30,24 +30,18 @@ export const Content = styled.div`
 
 export const LogoWrapper = styled.div`
   margin-bottom: 2rem;
-  width: 14rem;
-  height: 14rem;
-  border-radius: 50%;
+  width: clamp(12rem, 28vw, 22rem);
+  aspect-ratio: 3 / 4;
+  border-radius: 1rem;
   overflow: hidden;
-  flex-shrink: 0;
-  background-color: white;
-  box-shadow: 0 4px 32px 0 #D4A0A022;
-
-  @media (min-width: 768px) {
-    width: 18rem;
-    height: 18rem;
-  }
 `
 
 export const LogoImg = styled.img`
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
 `
 
 export const BrandName = styled.h1`
