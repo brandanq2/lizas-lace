@@ -1,8 +1,8 @@
 import styled from 'styled-components'
 
 export const FooterEl = styled.footer`
-  background-color: ${({ theme }) => theme.colors.taupeDark};
-  color: ${({ theme }) => theme.colors.laceWhite};
+  background-color: ${({ theme }) => theme.colors.display};
+  color: ${({ theme }) => theme.colors.creamLight};
   padding: 3.5rem 1.5rem;
 `
 
@@ -17,24 +17,24 @@ export const Inner = styled.div`
 `
 
 export const BrandName = styled.h2`
-  font-family: ${({ theme }) => theme.fonts.cursive};
-  font-size: 2.25rem;
-  letter-spacing: 0.05em;
+  font-family: ${({ theme }) => theme.fonts.display};
+  font-size: 1.5rem;
+  letter-spacing: 0;
   font-weight: 400;
-  color: ${({ theme }) => theme.colors.blushLight};
+  color: ${({ theme }) => theme.colors.pinkSoft};
 `
 
 export const FooterDivider = styled.div`
   width: 4rem;
   height: 1px;
-  background-color: ${({ theme }) => theme.colors.blush}66;
+  background-color: ${({ theme }) => theme.colors.pinkSoft}66;
 `
 
 export const ContactLinks = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  font-family: ${({ theme }) => theme.fonts.serif};
+  font-family: ${({ theme }) => theme.fonts.sans};
   font-size: 0.875rem;
   letter-spacing: 0.025em;
 `
@@ -44,19 +44,19 @@ export const FooterLink = styled.a`
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  color: ${({ theme }) => theme.colors.blushLight}CC;
+  color: ${({ theme }) => theme.colors.pinkSoft}CC;
   text-decoration: none;
   transition: color 200ms;
 
   &:hover {
-    color: ${({ theme }) => theme.colors.blushLight};
+    color: ${({ theme }) => theme.colors.pinkSoft};
   }
 `
 
 export const Copyright = styled.p`
-  font-family: ${({ theme }) => theme.fonts.serif};
+  font-family: ${({ theme }) => theme.fonts.sans};
   font-size: 0.75rem;
-  color: ${({ theme }) => theme.colors.laceWhite}4D;
+  color: ${({ theme }) => theme.colors.creamLight}4D;
   letter-spacing: 0.2em;
   text-transform: uppercase;
 `
@@ -75,16 +75,18 @@ export const NewsletterSection = styled.div`
 `
 
 export const NewsletterHeading = styled.p`
-  font-family: ${({ theme }) => theme.fonts.cursive};
-  font-size: 1.25rem;
-  color: ${({ theme }) => theme.colors.blushLight};
-  letter-spacing: 0.025em;
+  font-family: ${({ theme }) => theme.fonts.sans};
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: ${({ theme }) => theme.colors.pinkSoft};
 `
 
 export const NewsletterSubtext = styled.p`
-  font-family: ${({ theme }) => theme.fonts.serif};
+  font-family: ${({ theme }) => theme.fonts.sans};
   font-size: 0.8rem;
-  color: ${({ theme }) => theme.colors.laceWhite}99;
+  color: ${({ theme }) => theme.colors.creamLight}99;
   letter-spacing: 0.05em;
 `
 
@@ -102,31 +104,31 @@ export const NewsletterForm = styled.form`
 export const NewsletterInput = styled.input`
   flex: 1;
   padding: 0.6rem 1rem;
-  background: ${({ theme }) => theme.colors.laceWhite}1A;
-  border: 1px solid ${({ theme }) => theme.colors.blush}55;
+  background: ${({ theme }) => theme.colors.creamLight}1A;
+  border: 1px solid ${({ theme }) => theme.colors.pinkSoft}55;
   border-radius: 2px;
-  color: ${({ theme }) => theme.colors.laceWhite};
-  font-family: ${({ theme }) => theme.fonts.serif};
+  color: ${({ theme }) => theme.colors.creamLight};
+  font-family: ${({ theme }) => theme.fonts.sans};
   font-size: 0.875rem;
   outline: none;
   transition: border-color 200ms;
 
   &::placeholder {
-    color: ${({ theme }) => theme.colors.laceWhite}55;
+    color: ${({ theme }) => theme.colors.creamLight}55;
   }
 
   &:focus {
-    border-color: ${({ theme }) => theme.colors.blush};
+    border-color: ${({ theme }) => theme.colors.pinkSoft};
   }
 `
 
 export const NewsletterButton = styled.button`
   padding: 0.6rem 1.25rem;
-  background: ${({ theme }) => theme.colors.blush};
-  color: ${({ theme }) => theme.colors.taupeDark};
+  background: ${({ theme }) => theme.colors.pinkSoft};
+  color: ${({ theme }) => theme.colors.display};
   border: none;
   border-radius: 2px;
-  font-family: ${({ theme }) => theme.fonts.serif};
+  font-family: ${({ theme }) => theme.fonts.sans};
   font-size: 0.8rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -135,7 +137,7 @@ export const NewsletterButton = styled.button`
   transition: background 200ms;
 
   &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.colors.blushLight};
+    background: ${({ theme }) => theme.colors.cream};
   }
 
   &:disabled {
@@ -145,8 +147,8 @@ export const NewsletterButton = styled.button`
 `
 
 export const NewsletterFeedback = styled.p<{ $error?: boolean }>`
-  font-family: ${({ theme }) => theme.fonts.serif};
+  font-family: ${({ theme }) => theme.fonts.sans};
   font-size: 0.8rem;
   letter-spacing: 0.05em;
-  color: ${({ theme, $error }) => $error ? '#e07070' : theme.colors.blushLight};
+  color: ${({ theme, $error }) => $error ? '#e07070' : theme.colors.pinkSoft};
 `

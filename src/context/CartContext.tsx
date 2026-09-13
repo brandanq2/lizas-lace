@@ -42,8 +42,10 @@ interface CartContextValue {
   cart: Cart | null
   isOpen: boolean
   isLoading: boolean
+  error: string | null
   totalQuantity: number
   addItem: (variantId: string, qty?: number) => Promise<void>
+  buyNow: (variantId: string, qty?: number) => Promise<void>
   updateItem: (lineId: string, qty: number) => Promise<void>
   removeItem: (lineId: string) => Promise<void>
   openDrawer: () => void
@@ -73,17 +75,39 @@ export function CartProvider({ children }: { children: ReactNode }) {
       .catch(() => localStorage.removeItem(CART_ID_KEY))
   }, [])
 
+  /** Adds the variant and returns the updated cart, without touching the drawer. */
+  async function putInCart(variantId: string, qty: number): Promise<Cart> {
+    const cartId = localStorage.getItem(CART_ID_KEY)
+    const cart = cartId
+      ? await addToCart(cartId, variantId, qty)
+      : await createCart(variantId, qty)
+
+    localStorage.setItem(CART_ID_KEY, cart.id)
+    dispatch({ type: 'SET_CART', cart })
+    return cart
+  }
+
   async function addItem(variantId: string, qty = 1) {
     dispatch({ type: 'SET_LOADING', loading: true })
     try {
-      const cartId = localStorage.getItem(CART_ID_KEY)
-      const cart = cartId
-        ? await addToCart(cartId, variantId, qty)
-        : await createCart(variantId, qty)
-
-      localStorage.setItem(CART_ID_KEY, cart.id)
-      dispatch({ type: 'SET_CART', cart })
+      await putInCart(variantId, qty)
       dispatch({ type: 'OPEN_DRAWER' })
+    } catch (e) {
+      dispatch({ type: 'SET_ERROR', error: (e as Error).message })
+    }
+  }
+
+  /**
+   * Skips the drawer and sends the shopper straight to Shopify's hosted
+   * checkout. This is the headless equivalent of Shopify's dynamic
+   * "Buy with Shop Pay" button, which can't be rendered outside a Shopify
+   * theme — the hosted checkout still offers Shop Pay as a payment option.
+   */
+  async function buyNow(variantId: string, qty = 1) {
+    dispatch({ type: 'SET_LOADING', loading: true })
+    try {
+      const cart = await putInCart(variantId, qty)
+      window.location.href = cart.checkoutUrl
     } catch (e) {
       dispatch({ type: 'SET_ERROR', error: (e as Error).message })
     }
@@ -117,8 +141,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     cart: state.cart,
     isOpen: state.isOpen,
     isLoading: state.isLoading,
+    error: state.error,
     totalQuantity: state.cart?.totalQuantity ?? 0,
     addItem,
+    buyNow,
     updateItem,
     removeItem,
     openDrawer: () => dispatch({ type: 'OPEN_DRAWER' }),

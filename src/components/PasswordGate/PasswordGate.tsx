@@ -41,7 +41,7 @@ export default function PasswordGate({ children }: Props) {
   return (
     <Wrapper>
       <Card>
-        <Logo src="/logo.jpeg" alt="Liza's Lace" />
+        <Logo src="/new-logo-colored.png" alt="Liza's Lace" />
         <Title>Liza's Lace</Title>
         <Subtitle>This page is password protected.<br />Enter the password to continue.</Subtitle>
 

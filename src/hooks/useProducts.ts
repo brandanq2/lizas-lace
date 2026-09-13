@@ -1,22 +1,22 @@
 import { useEffect, useState } from 'react'
-import type { Product } from '../types/shopify'
+import type { ProductSummary } from '../types/shopify'
 import { getProducts } from '../lib/shopify'
 
 interface UseProductsResult {
-  products: Product[]
+  products: ProductSummary[]
   isLoading: boolean
   error: string | null
 }
 
 export function useProducts(first = 24): UseProductsResult {
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<ProductSummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
     setIsLoading(true)
-    getProducts(first)
+    getProducts()
       .then(data => {
         if (!cancelled) {
           setProducts(data)

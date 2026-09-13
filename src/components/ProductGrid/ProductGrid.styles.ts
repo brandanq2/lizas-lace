@@ -3,16 +3,18 @@ import styled from 'styled-components'
 export const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem;
+  column-gap: 1rem;
+  row-gap: 2.25rem;
 
   @media (min-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
+    column-gap: 1.5rem;
+    row-gap: 2.5rem;
   }
 
   @media (min-width: 1024px) {
     grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
+    column-gap: 1.5rem;
+    row-gap: 3rem;
   }
 
   @media (min-width: 1280px) {

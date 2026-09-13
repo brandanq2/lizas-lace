@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
-import type { Product } from '../types/shopify'
+import type { ProductSummary } from '../types/shopify'
 import { getProducts, getCollectionProducts } from '../lib/shopify'
 
 interface UseShopProductsResult {
-  products: Product[]
+  products: ProductSummary[]
   isLoading: boolean
   error: string | null
 }
 
 export function useShopProducts(collectionHandle?: string): UseShopProductsResult {
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<ProductSummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 

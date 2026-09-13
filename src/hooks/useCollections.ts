@@ -8,12 +8,20 @@ interface UseCollectionsResult {
   error: string | null
 }
 
-export function useCollections(first = 30): UseCollectionsResult {
+/**
+ * `enabled` defers the request. The collections query probes each collection's
+ * products to work out how many will actually render, which makes it the
+ * heaviest read on the site — too expensive to fire on every page just so the
+ * header's category menu is warm. The menu passes `false` until it is first
+ * opened; the shop page, which always needs them, leaves it alone.
+ */
+export function useCollections(first = 30, enabled = true): UseCollectionsResult {
   const [collections, setCollections] = useState<Collection[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(enabled)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!enabled) return
     let cancelled = false
     setIsLoading(true)
     getCollections(first)
@@ -30,7 +38,16 @@ export function useCollections(first = 30): UseCollectionsResult {
         }
       })
     return () => { cancelled = true }
-  }, [first])
+  }, [first, enabled])
 
   return { collections, isLoading, error }
+}
+
+/**
+ * The collections worth showing: Shopify's default "frontpage" is an alias for
+ * the whole catalogue, and a collection whose every product is still awaiting
+ * photography would open onto an empty grid.
+ */
+export function shoppableCollections(collections: Collection[]): Collection[] {
+  return collections.filter(c => c.handle !== 'frontpage' && c.renderableCount > 0)
 }

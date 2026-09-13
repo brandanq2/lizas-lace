@@ -1,94 +1,115 @@
 import { useState } from 'react'
-import type { Product } from '../../types/shopify'
-import { useCart } from '../../context/CartContext'
+import type { ProductSummary } from '../../types/shopify'
 import { formatMoney } from '../../lib/utils'
+import { getImages, getRealOptions, getVariants, productEyebrow } from '../../lib/product'
 import {
-  Card,
-  ImageWrapper,
-  ProductImage,
-  NoImage,
-  SoldOutBadge,
-  ArrowButton,
-  Dots,
-  Dot,
-  CardBody,
-  ProductTitle,
-  ProductPrice,
-  AddButton,
+  CardButton, CardLink, ImageWrapper, ProductImage,
+  NoImage, NoImageMark, NoImageText, ImageBadge, ImageCount,
+  CardBody, Eyebrow, ProductTitle, ProductPrice, ComparePrice,
+  SizeRow, SizeChip, ExpandHint,
 } from './ProductCard.styles'
 
 interface Props {
-  product: Product
+  product: ProductSummary
+  /** Desktop only — the grid opens an inline panel instead of navigating. */
+  isDesktop: boolean
+  expanded: boolean
+  onToggle: () => void
 }
 
-export default function ProductCard({ product }: Props) {
-  const { addItem, isLoading } = useCart()
-  const [adding, setAdding] = useState(false)
-  const [imgIndex, setImgIndex] = useState(0)
+export default function ProductCard({ product, isDesktop, expanded, onToggle }: Props) {
+  const [hovering, setHovering] = useState(false)
 
-  const firstVariant = product.variants.edges[0]?.node
-  const isSoldOut = !firstVariant?.availableForSale
+  const images = getImages(product)
+  const variants = getVariants(product)
+  const firstVariant = variants[0]
   const price = firstVariant?.price ?? product.priceRange.minVariantPrice
+  const compareAt = firstVariant?.compareAtPrice
+  const showCompare =
+    compareAt != null && parseFloat(compareAt.amount) > parseFloat(price.amount)
 
-  const images = product.images.edges.map(e => e.node)
-  const hasMultiple = images.length > 1
+  const eyebrow = productEyebrow(product)
+  const sizeOption = getRealOptions(product).find(o => /size/i.test(o.name))
 
-  function prev(e: React.MouseEvent) {
-    e.stopPropagation()
-    setImgIndex(i => (i - 1 + images.length) % images.length)
-  }
+  /* Swap to the second photo on hover, the way the reference grid does. */
+  const activeIndex = hovering && images.length > 1 ? 1 : 0
 
-  function next(e: React.MouseEvent) {
-    e.stopPropagation()
-    setImgIndex(i => (i + 1) % images.length)
-  }
-
-  async function handleAddToBag() {
-    if (!firstVariant || isSoldOut) return
-    setAdding(true)
-    await addItem(firstVariant.id)
-    setAdding(false)
-  }
-
-  return (
-    <Card>
-      <ImageWrapper>
-        {images.length > 0 ? images.map((img, i) => (
+  const media = (
+    <ImageWrapper>
+      {images.length > 0 ? (
+        images.map((img, i) => (
           <ProductImage
             key={img.url}
             src={img.url}
             alt={img.altText ?? product.title}
             loading="lazy"
-            $visible={i === imgIndex}
+            $visible={i === activeIndex}
           />
-        )) : (
-          <NoImage>No image</NoImage>
-        )}
-        {isSoldOut && <SoldOutBadge>Sold Out</SoldOutBadge>}
-        {hasMultiple && (
-          <>
-            <ArrowButton $side="left" onClick={prev} aria-label="Previous image">&#8249;</ArrowButton>
-            <ArrowButton $side="right" onClick={next} aria-label="Next image">&#8250;</ArrowButton>
-            <Dots>
-              {images.map((_, i) => (
-                <Dot key={i} $active={i === imgIndex} onClick={e => { e.stopPropagation(); setImgIndex(i) }} />
-              ))}
-            </Dots>
-          </>
-        )}
-      </ImageWrapper>
+        ))
+      ) : (
+        <NoImage>
+          <NoImageMark src="/new-logo-bw.png" alt="" aria-hidden="true" />
+          <NoImageText>Photo coming soon</NoImageText>
+        </NoImage>
+      )}
+      {!product.availableForSale && <ImageBadge>Sold</ImageBadge>}
+      {images.length > 1 && <ImageCount>1 / {images.length}</ImageCount>}
+    </ImageWrapper>
+  )
 
-      <CardBody>
-        <ProductTitle>{product.title}</ProductTitle>
-        <ProductPrice>{formatMoney(price)}</ProductPrice>
-        <AddButton
-          $soldOut={isSoldOut}
-          disabled={isSoldOut || adding || isLoading}
-          onClick={handleAddToBag}
-        >
-          {isSoldOut ? 'Sold Out' : adding ? 'Adding…' : 'Add to Bag'}
-        </AddButton>
-      </CardBody>
-    </Card>
+  const body = (
+    <CardBody>
+      {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+      <ProductTitle>{product.title}</ProductTitle>
+      <ProductPrice>
+        {formatMoney(price)}
+        {showCompare && compareAt && <ComparePrice>{formatMoney(compareAt)}</ComparePrice>}
+      </ProductPrice>
+      {sizeOption && (
+        <SizeRow>
+          {sizeOption.values.map(value => {
+            const available = variants.some(
+              v =>
+                v.availableForSale &&
+                v.selectedOptions.some(o => o.name === sizeOption.name && o.value === value)
+            )
+            return (
+              <SizeChip key={value} $available={available}>
+                {value}
+              </SizeChip>
+            )
+          })}
+        </SizeRow>
+      )}
+      <ExpandHint $expanded={expanded}>{expanded ? 'Close' : 'Quick view'}</ExpandHint>
+    </CardBody>
+  )
+
+  // Mobile goes straight to the product page; desktop opens the inline panel.
+  if (!isDesktop) {
+    return (
+      <CardLink
+        to={`/product/${product.handle}`}
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+      >
+        {media}
+        {body}
+      </CardLink>
+    )
+  }
+
+  return (
+    <CardButton
+      type="button"
+      $expanded={expanded}
+      onClick={onToggle}
+      aria-expanded={expanded}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
+      {media}
+      {body}
+    </CardButton>
   )
 }

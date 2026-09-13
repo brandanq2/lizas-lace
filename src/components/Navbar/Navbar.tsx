@@ -1,84 +1,167 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
+import { useCollections, shoppableCollections } from '../../hooks/useCollections'
 import {
-  Nav, NavInner, NavGroup, NavRouterLink, BrandRouterLink, CartButton, CartBadge,
-  MobileLeft, MobileRight, HamburgerButton, HamburgerBar, MobileMenu, MobileNavLink,
+  Nav, Bar, NavInner, HomeLink, NavGroup, BrandSlot, BrandRouterLink, BrandMark, BrandFallback,
+  GlobeShopButton, ShopMenu, ShopMenuItem, ShopMenuNote,
+  CartButton, CatWrap, CatIcon, CartLabel, CartBadge,
+  MobileLeft, IconButton, HamburgerBar, MobileMenu, MobileNavLink,
 } from './Navbar.styles'
-
-function BagIcon() {
-  return (
-    <svg
-      width="20" height="20" viewBox="0 0 24 24"
-      fill="none" stroke="currentColor"
-      strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <path d="M16 10a4 4 0 01-8 0" />
-    </svg>
-  )
-}
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [shopOpen, setShopOpen] = useState(false)
+  /* Latches the first time either menu opens, so the collections request
+     fires once and lazily rather than on every page load. Both menus need it:
+     the globe is desktop-only, so on mobile the hamburger is what asks. */
+  const [categoriesNeeded, setCategoriesNeeded] = useState(false)
+  const shopRef = useRef<HTMLDivElement>(null)
   const { totalQuantity, openDrawer } = useCart()
+  const { pathname } = useLocation()
 
+  const { collections, isLoading: loadingCategories } = useCollections(30, categoriesNeeded)
+  const categories = shoppableCollections(collections)
+
+  /* The header is transparent, so this is what fades in the frosted panel
+     behind the links once content starts passing underneath them. */
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
+    onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  // Collapse both menus whenever the route changes.
+  useEffect(() => {
+    setMenuOpen(false)
+    setShopOpen(false)
+  }, [pathname])
+
+  // Dismiss the category menu on outside click or Escape.
+  useEffect(() => {
+    if (!shopOpen) return
+    function onPointerDown(e: MouseEvent) {
+      if (shopRef.current && !shopRef.current.contains(e.target as Node)) setShopOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setShopOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [shopOpen])
+
   function closeMenu() { setMenuOpen(false) }
 
+  function toggleShop() {
+    setCategoriesNeeded(true)
+    setShopOpen(o => !o)
+  }
+
+  function toggleMobileMenu() {
+    setCategoriesNeeded(true)
+    setMenuOpen(o => !o)
+  }
+
   return (
-    <Nav $scrolled={scrolled}>
-      <NavInner>
-        {/* Desktop left */}
-        <NavGroup>
-          <NavRouterLink to="/" end>Home</NavRouterLink>
-        </NavGroup>
+    <Nav>
+      <Bar $lifted={scrolled}>
+        <NavInner>
+          {/* Home, top left. The fixture's medallion also links home, the way
+              a logo does; this is the explicit nav affordance. */}
+          <HomeLink to="/" end onClick={closeMenu}>Home</HomeLink>
 
-        {/* Brand — always centered */}
-        <BrandRouterLink to="/" onClick={closeMenu}>Liza's Lace</BrandRouterLink>
+          {/* Brand mark — the pendant fixture, dangling from the header */}
+          <BrandSlot ref={shopRef}>
+            <BrandRouterLink to="/" onClick={closeMenu} aria-label="Liza's Lace — home">
+              <BrandMark src="/shop-light-fixture.png" alt="" aria-hidden="true" />
+              <BrandFallback>Liza's Lace</BrandFallback>
+            </BrandRouterLink>
 
-        {/* Desktop right */}
-        <NavGroup $right>
-          <NavRouterLink to="/shop">Shop</NavRouterLink>
-          <CartButton onClick={openDrawer} aria-label={`Open bag, ${totalQuantity} items`}>
-            <BagIcon />
-            {totalQuantity > 0 && (
-              <CartBadge>{totalQuantity > 99 ? '99+' : totalQuantity}</CartBadge>
+            {/* The glass globe opens the category menu. "Shop" is painted into
+                the artwork, so the control only needs an accessible name. */}
+            <GlobeShopButton
+              type="button"
+              onClick={toggleShop}
+              aria-haspopup="menu"
+              aria-expanded={shopOpen}
+            >
+              <BrandFallback>Shop by category</BrandFallback>
+            </GlobeShopButton>
+
+            {shopOpen && (
+              <ShopMenu role="menu" aria-label="Shop by category">
+                <ShopMenuItem to="/shop" role="menuitem" onClick={() => setShopOpen(false)}>
+                  Everything
+                </ShopMenuItem>
+                {categories.map(c => (
+                  <ShopMenuItem
+                    key={c.id}
+                    to={`/shop?collection=${encodeURIComponent(c.handle)}`}
+                    role="menuitem"
+                    onClick={() => setShopOpen(false)}
+                  >
+                    {c.title}
+                  </ShopMenuItem>
+                ))}
+                {loadingCategories && <ShopMenuNote>Loading categories…</ShopMenuNote>}
+                {!loadingCategories && categories.length === 0 && (
+                  <ShopMenuNote>No categories yet</ShopMenuNote>
+                )}
+              </ShopMenu>
             )}
-          </CartButton>
-        </NavGroup>
+          </BrandSlot>
 
-        {/* Mobile left — hamburger */}
-        <MobileLeft>
-          <HamburgerButton onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
-            <HamburgerBar $open={menuOpen} $pos="top" />
-            <HamburgerBar $open={menuOpen} $pos="mid" />
-            <HamburgerBar $open={menuOpen} $pos="bot" />
-          </HamburgerButton>
-        </MobileLeft>
+          {/* Cart — the cat, above the label. One control at every size. */}
+          <NavGroup $right>
+            <CartButton
+              onClick={openDrawer}
+              aria-label={`Open bag, ${totalQuantity} items`}
+            >
+              <CatWrap>
+                <CatIcon src="/cat-cart.png" alt="" aria-hidden="true" />
+                {totalQuantity > 0 && (
+                  <CartBadge>{totalQuantity > 99 ? '99+' : totalQuantity}</CartBadge>
+                )}
+              </CatWrap>
+              <CartLabel>CA(R)T</CartLabel>
+            </CartButton>
+          </NavGroup>
 
-        {/* Mobile right — cart */}
-        <MobileRight>
-          <CartButton onClick={openDrawer} aria-label={`Open bag, ${totalQuantity} items`}>
-            <BagIcon />
-            {totalQuantity > 0 && (
-              <CartBadge>{totalQuantity > 99 ? '99+' : totalQuantity}</CartBadge>
-            )}
-          </CartButton>
-        </MobileRight>
-      </NavInner>
+          {/* Mobile left — hamburger */}
+          <MobileLeft>
+            <IconButton
+              onClick={toggleMobileMenu}
+              aria-label="Toggle menu"
+              aria-expanded={menuOpen}
+            >
+              <HamburgerBar $open={menuOpen} $pos="top" />
+              <HamburgerBar $open={menuOpen} $pos="mid" />
+              <HamburgerBar $open={menuOpen} $pos="bot" />
+            </IconButton>
+          </MobileLeft>
+        </NavInner>
+      </Bar>
 
-      {/* Mobile dropdown menu */}
+      {/* Mobile dropdown — the same categories, since the globe menu is a
+          desktop affordance and the hamburger is the mobile one. */}
       <MobileMenu $open={menuOpen}>
         <MobileNavLink to="/" end onClick={closeMenu}>Home</MobileNavLink>
-        <MobileNavLink to="/shop" onClick={closeMenu}>Shop</MobileNavLink>
+        <MobileNavLink to="/shop" end onClick={closeMenu}>Shop</MobileNavLink>
+        {categories.map(c => (
+          <MobileNavLink
+            key={c.id}
+            to={`/shop?collection=${encodeURIComponent(c.handle)}`}
+            onClick={closeMenu}
+          >
+            {c.title}
+          </MobileNavLink>
+        ))}
       </MobileMenu>
     </Nav>
   )

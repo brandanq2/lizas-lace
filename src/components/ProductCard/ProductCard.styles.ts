@@ -1,161 +1,184 @@
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
+import { Link } from 'react-router-dom'
 
-export const Card = styled.article`
+/* The card is a button on desktop (opens the inline panel) and a link on
+   mobile (goes straight to the product page), so the shared visual styles
+   live in a mixin applied to both. */
+const cardBase = css`
   display: flex;
   flex-direction: column;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.blushLight};
-  overflow: hidden;
-  transition: box-shadow 200ms, transform 200ms;
+  text-align: left;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  appearance: none;
 
-  &:hover {
-    box-shadow: 0 4px 20px rgba(92, 74, 58, 0.12);
-    transform: translateY(-2px);
+  &:focus-visible {
+    outline: 1px solid ${({ theme }) => theme.colors.ink};
+    outline-offset: 4px;
   }
+`
+
+export const CardButton = styled.button<{ $expanded: boolean }>`
+  ${cardBase}
+`
+
+export const CardLink = styled(Link)`
+  ${cardBase}
 `
 
 export const ImageWrapper = styled.div`
   position: relative;
   width: 100%;
   aspect-ratio: 3 / 4;
-  background-color: ${({ theme }) => theme.colors.blushLight};
+  background-color: ${({ theme }) => theme.colors.tint};
   overflow: hidden;
 `
 
-export const ProductImage = styled.img<{ $visible?: boolean }>`
+export const ProductImage = styled.img<{ $visible: boolean }>`
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: ${({ $visible }) => ($visible === false ? 0 : 1)};
-  transition: opacity 500ms ease, transform 400ms ease;
-
-  ${Card}:hover & {
-    transform: scale(1.03);
-  }
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transition: opacity 500ms ease;
 `
 
+/* Empty state — a large part of this catalogue has no photography yet, so
+   the placeholder is designed to look deliberate rather than broken. */
 export const NoImage = styled.div`
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: ${({ theme }) => theme.colors.taupe}88;
-  font-family: ${({ theme }) => theme.fonts.serif};
-  font-size: 0.875rem;
+  gap: 0.75rem;
+  background: ${({ theme }) => theme.colors.tint};
 `
 
-export const ArrowButton = styled.button<{ $side: 'left' | 'right' }>`
+export const NoImageMark = styled.img`
+  width: 2.25rem;
+  opacity: 0.28;
+`
+
+export const NoImageText = styled.span`
+  font-family: ${({ theme }) => theme.fonts.sans};
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: ${({ theme }) => theme.colors.muted}AA;
+`
+
+export const ImageBadge = styled.span`
   position: absolute;
-  top: 50%;
-  ${({ $side }) => $side}: 0.5rem;
-  transform: translateY(-50%);
-  background: rgba(255, 253, 249, 0.85);
-  border: none;
-  color: ${({ theme }) => theme.colors.taupeDark};
-  font-size: 1.75rem;
-  line-height: 1;
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  right: 0;
+  bottom: 0.75rem;
+  background: ${({ theme }) => theme.colors.paper};
+  color: ${({ theme }) => theme.colors.ink};
+  font-family: ${({ theme }) => theme.fonts.sans};
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.375rem 0.75rem;
+`
+
+export const ImageCount = styled.span`
+  position: absolute;
+  right: 0.75rem;
+  top: 0.75rem;
+  background: rgba(255, 253, 249, 0.9);
+  color: ${({ theme }) => theme.colors.ink};
+  font-family: ${({ theme }) => theme.fonts.sans};
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  padding: 0.125rem 0.4375rem;
   opacity: 0;
-  transition: opacity 200ms;
-  padding: 0;
-  z-index: 2;
+  transition: opacity 200ms ease;
 
   ${ImageWrapper}:hover & {
     opacity: 1;
   }
-
-  &:hover {
-    background: rgba(255, 253, 249, 1);
-  }
-`
-
-export const Dots = styled.div`
-  position: absolute;
-  bottom: 0.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 0.375rem;
-  z-index: 2;
-`
-
-export const Dot = styled.button<{ $active: boolean }>`
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: 50%;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  background: ${({ theme, $active }) =>
-    $active ? theme.colors.taupeDark : 'rgba(255,253,249,0.7)'};
-  transition: background 200ms;
-`
-
-export const SoldOutBadge = styled.span`
-  position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  background: ${({ theme }) => theme.colors.taupeDark};
-  color: ${({ theme }) => theme.colors.laceWhite};
-  font-family: ${({ theme }) => theme.fonts.serif};
-  font-size: 0.6875rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.25rem 0.625rem;
 `
 
 export const CardBody = styled.div`
-  padding: 0.875rem 1rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  flex: 1;
+  gap: 0.3125rem;
+  padding: 0.875rem 0 0;
 `
 
-export const ProductTitle = styled.h2`
-  font-family: ${({ theme }) => theme.fonts.serif};
+export const Eyebrow = styled.span`
+  font-family: ${({ theme }) => theme.fonts.sans};
+  font-size: 0.8125rem;
+  color: ${({ theme }) => theme.colors.muted};
+  text-decoration: underline;
+  text-underline-offset: 2px;
+`
+
+export const ProductTitle = styled.h3`
+  font-family: ${({ theme }) => theme.fonts.sans};
   font-size: 0.9375rem;
   font-weight: 500;
-  color: ${({ theme }) => theme.colors.taupeDark};
-  line-height: 1.3;
+  color: ${({ theme }) => theme.colors.ink};
+  line-height: 1.35;
   margin: 0;
 `
 
 export const ProductPrice = styled.p`
-  font-family: ${({ theme }) => theme.fonts.serif};
+  font-family: ${({ theme }) => theme.fonts.sans};
   font-size: 0.9375rem;
-  color: ${({ theme }) => theme.colors.taupe};
+  color: ${({ theme }) => theme.colors.ink};
   margin: 0;
 `
 
-export const AddButton = styled.button<{ $soldOut?: boolean }>`
-  margin-top: auto;
-  padding: 0.625rem 1rem;
-  background: ${({ theme, $soldOut }) =>
-    $soldOut ? theme.colors.blushLight : theme.colors.blush};
-  color: ${({ theme }) => theme.colors.taupeDark};
-  border: none;
-  font-family: ${({ theme }) => theme.fonts.serif};
-  font-size: 0.8125rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: ${({ $soldOut }) => ($soldOut ? 'default' : 'pointer')};
-  transition: background 200ms, opacity 200ms;
-  width: 100%;
+export const ComparePrice = styled.span`
+  margin-left: 0.5rem;
+  color: ${({ theme }) => theme.colors.muted};
+  text-decoration: line-through;
+`
 
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.colors.blushLight};
-  }
+export const SizeRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.125rem;
+`
 
-  &:disabled {
-    opacity: 0.6;
+export const SizeChip = styled.span<{ $available: boolean }>`
+  font-family: ${({ theme }) => theme.fonts.sans};
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: ${({ theme, $available }) =>
+    $available ? theme.colors.muted : `${theme.colors.muted}77`};
+  text-decoration: ${({ $available }) => ($available ? 'none' : 'line-through')};
+`
+
+export const ExpandHint = styled.span<{ $expanded: boolean }>`
+  display: none;
+
+  @media (min-width: 1024px) {
+    display: block;
+    margin-top: 0.25rem;
+    font-family: ${({ theme }) => theme.fonts.sans};
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.colors.muted};
+    opacity: ${({ $expanded }) => ($expanded ? 1 : 0)};
+    transition: opacity 200ms ease;
+
+    ${CardButton}:hover & {
+      opacity: 1;
+    }
   }
 `
