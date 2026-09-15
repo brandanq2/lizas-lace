@@ -60,56 +60,6 @@ export const Layout = styled.div`
   }
 `
 
-export const Gallery = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-`
-
-export const GalleryFigure = styled.div`
-  position: relative;
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  background: ${({ theme }) => theme.colors.tint};
-  overflow: hidden;
-`
-
-export const GalleryImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-`
-
-export const GalleryPlaceholder = styled.div`
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  aspect-ratio: 4 / 3;
-  background: ${({ theme }) => theme.colors.tint};
-`
-
-export const PlaceholderMark = styled.img`
-  width: 4rem;
-  opacity: 0.28;
-`
-
-export const PlaceholderText = styled.span`
-  font-family: ${({ theme }) => theme.fonts.sans};
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: ${({ theme }) => theme.colors.muted}AA;
-`
-
 export const Details = styled.div`
   display: flex;
   flex-direction: column;

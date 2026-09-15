@@ -1,5 +1,6 @@
 import styled, { css } from 'styled-components'
 import { Link } from 'react-router-dom'
+import { snapTrack, snapSlide } from '../../styles/carousel'
 
 /**
  * The grid cell. The card's clickable element used to wrap the photo as well,
@@ -75,6 +76,56 @@ export const MediaAction = styled.button`
 
 export const MediaActionLink = styled(Link)`
   ${mediaActionBase}
+`
+
+/**
+ * The mobile card's photos: the same swipe the product page uses, so the two
+ * behave identically on a touchscreen. Only rendered below the desktop
+ * breakpoint, where the arrows take over instead.
+ */
+export const CardTrack = styled.div`
+  ${snapTrack}
+  position: absolute;
+  inset: 0;
+`
+
+/**
+ * Each photo is also the link to the product. A swipe that starts on an
+ * anchor still scrolls the track, and the browser cancels the click once the
+ * gesture turns into a scroll — so one element can carry both without a
+ * transparent overlay stealing the gesture.
+ */
+export const CardSlide = styled(Link)`
+  ${snapSlide}
+  position: relative;
+  display: block;
+  height: 100%;
+`
+
+/**
+ * Position indicator, laid over the photo rather than under it so a card
+ * never changes height as the grid fills in. Deliberately not interactive:
+ * at this size a tap target would eat the swipe area it is advertising.
+ */
+export const CardDots = styled.div`
+  position: absolute;
+  bottom: 0.625rem;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 0.3125rem;
+  pointer-events: none;
+`
+
+export const CardDot = styled.span<{ $active: boolean }>`
+  width: 0.3125rem;
+  height: 0.3125rem;
+  border-radius: 50%;
+  background: ${({ $active }) => ($active ? '#FEFDFE' : 'rgba(254, 253, 254, 0.5)')};
+  box-shadow: 0 0 0.1875rem rgba(35, 31, 32, 0.4);
+  transition: background-color 200ms ease;
 `
 
 /** Previous/next photo. Sits above MediaAction so taps reach it first. */

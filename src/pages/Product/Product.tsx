@@ -4,9 +4,9 @@ import { useProduct } from '../../hooks/useProduct'
 import { formatMoney } from '../../lib/utils'
 import { getImages, getVariants } from '../../lib/product'
 import BuyPanel from '../../components/BuyPanel/BuyPanel'
+import ProductGallery from '../../components/ProductGallery/ProductGallery'
 import {
   Page, Inner, Breadcrumb, CrumbLink, CrumbCurrent, Layout,
-  Gallery, GalleryFigure, GalleryImage, GalleryPlaceholder, PlaceholderMark, PlaceholderText,
   Details, Title, Price, ComparePrice, Vendor, Rule,
   Pickup, PickupIcon, PickupNote, Description, StateMessage, BackLink,
 } from './Product.styles'
@@ -56,20 +56,7 @@ export default function Product() {
         </Breadcrumb>
 
         <Layout>
-          <Gallery>
-            {images.length > 0 ? (
-              images.map(img => (
-                <GalleryFigure key={img.url}>
-                  <GalleryImage src={img.url} alt={img.altText ?? product.title} />
-                </GalleryFigure>
-              ))
-            ) : (
-              <GalleryPlaceholder>
-                <PlaceholderMark src="/new-logo-bw.png" alt="" aria-hidden="true" />
-                <PlaceholderText>Photo coming soon</PlaceholderText>
-              </GalleryPlaceholder>
-            )}
-          </Gallery>
+          <ProductGallery images={images} title={product.title} />
 
           <Details>
             <Title>{product.title}</Title>

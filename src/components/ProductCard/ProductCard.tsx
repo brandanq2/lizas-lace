@@ -2,9 +2,11 @@ import { useState } from 'react'
 import type { ProductSummary } from '../../types/shopify'
 import { formatMoney } from '../../lib/utils'
 import { getImages, getRealOptions, getVariants, productEyebrow } from '../../lib/product'
+import { useSnapCarousel } from '../../hooks/useSnapCarousel'
 import {
   CardShell, CardButton, CardLink, ImageWrapper, ProductImage,
   MediaAction, MediaActionLink, CarouselArrow,
+  CardTrack, CardSlide, CardDots, CardDot,
   NoImage, NoImageMark, NoImageText, ImageBadge, ImageCount,
   CardBody, Eyebrow, ProductTitle, ProductPrice, ComparePrice,
   SizeRow, SizeChip, ExpandHint,
@@ -28,12 +30,17 @@ function Chevron({ direction }: { direction: 'left' | 'right' }) {
 }
 
 export default function ProductCard({ product, isDesktop, expanded, onToggle }: Props) {
+  const images = getImages(product)
+
+  /* Mobile swipes through the photos, the same way the product page does;
+     desktop crossfades between them with the arrows. The two track their
+     position separately because only one of them is mounted at a time. */
+  const swipe = useSnapCarousel(images.length)
   /* Which photo the arrows have moved to. The card used to preview the second
      photo on hover, but with arrows on every multi-photo card that only fought
      the shopper's own choice of where to be. */
   const [index, setIndex] = useState(0)
 
-  const images = getImages(product)
   const variants = getVariants(product)
   const firstVariant = variants[0]
   const price = firstVariant?.price ?? product.priceRange.minVariantPrice
@@ -45,6 +52,7 @@ export default function ProductCard({ product, isDesktop, expanded, onToggle }: 
   const sizeOption = getRealOptions(product).find(o => /size/i.test(o.name))
 
   const hasCarousel = images.length > 1
+  const shownIndex = isDesktop ? index : swipe.index
 
   function step(delta: number) {
     setIndex(current => (current + delta + images.length) % images.length)
@@ -52,7 +60,32 @@ export default function ProductCard({ product, isDesktop, expanded, onToggle }: 
 
   const media = (
     <ImageWrapper>
-      {images.length > 0 ? (
+      {images.length === 0 && (
+        <NoImage>
+          <NoImageMark src="/new-logo-bw.png" alt="" aria-hidden="true" />
+          <NoImageText>Photo coming soon</NoImageText>
+        </NoImage>
+      )}
+
+      {/* Mobile: a swipe track whose slides are themselves the product link,
+          so no overlay is needed and nothing intercepts the gesture. */}
+      {images.length > 0 && !isDesktop && (
+        <CardTrack ref={swipe.trackRef} onScroll={swipe.onScroll}>
+          {images.map(img => (
+            <CardSlide key={img.url} to={`/product/${product.handle}`} tabIndex={-1}>
+              <ProductImage
+                src={img.url}
+                alt={img.altText ?? product.title}
+                loading="lazy"
+                $visible
+              />
+            </CardSlide>
+          ))}
+        </CardTrack>
+      )}
+
+      {/* Desktop: all photos stacked, crossfaded by the arrows. */}
+      {images.length > 0 && isDesktop &&
         images.map((img, i) => (
           <ProductImage
             key={img.url}
@@ -61,23 +94,27 @@ export default function ProductCard({ product, isDesktop, expanded, onToggle }: 
             loading="lazy"
             $visible={i === index}
           />
-        ))
-      ) : (
-        <NoImage>
-          <NoImageMark src="/new-logo-bw.png" alt="" aria-hidden="true" />
-          <NoImageText>Photo coming soon</NoImageText>
-        </NoImage>
-      )}
+        ))}
 
-      {/* Same destination as the body control below, so the photo stays
-          clickable now that it sits outside it. */}
+      {/* Carries the same action as the body control, for the photo area that
+          is not already a link. */}
       {isDesktop ? (
         <MediaAction type="button" tabIndex={-1} aria-hidden="true" onClick={onToggle} />
       ) : (
-        <MediaActionLink to={`/product/${product.handle}`} tabIndex={-1} aria-hidden="true" />
+        images.length === 0 && (
+          <MediaActionLink to={`/product/${product.handle}`} tabIndex={-1} aria-hidden="true" />
+        )
       )}
 
-      {hasCarousel && (
+      {hasCarousel && !isDesktop && (
+        <CardDots aria-hidden="true">
+          {images.map((img, i) => (
+            <CardDot key={img.url} $active={i === swipe.index} />
+          ))}
+        </CardDots>
+      )}
+
+      {hasCarousel && isDesktop && (
         <>
           <CarouselArrow
             type="button"
@@ -100,8 +137,10 @@ export default function ProductCard({ product, isDesktop, expanded, onToggle }: 
 
       {!product.availableForSale && <ImageBadge>Sold</ImageBadge>}
       {hasCarousel && (
-        <ImageCount $alwaysVisible={index > 0} aria-hidden="true">
-          {index + 1} / {images.length}
+        /* There is no hover to reveal it on a touchscreen, so on mobile the
+           counter simply stays put. */
+        <ImageCount $alwaysVisible={!isDesktop || shownIndex > 0} aria-hidden="true">
+          {shownIndex + 1} / {images.length}
         </ImageCount>
       )}
     </ImageWrapper>
