@@ -31,9 +31,30 @@ export interface ProductVariant {
 }
 
 /**
+ * A node in Shopify's standard product taxonomy — the admin's "Category"
+ * field, which is distinct from both `productType` and collections.
+ * `ancestors` arrives nearest-parent first, so a path reads leaf to root.
+ */
+export interface TaxonomyCategory {
+  id: string
+  name: string
+  ancestors: { id: string; name: string }[]
+}
+
+/**
+ * The minimum needed to count a product towards a category filter: its
+ * taxonomy node plus whether it is in stock.
+ */
+export interface CategoryFacet {
+  category: TaxonomyCategory | null
+  availableForSale: boolean
+}
+
+/**
  * What the shop grid and the inline quick view need. The catalogue runs to a
- * few hundred products, so list queries deliberately skip the description
- * fields and cap the image/variant sets.
+ * few hundred products, so list queries cap the image and variant sets and
+ * fetch the plain-text description only — the grid needs it to tell a
+ * finished listing from an unfinished one, but not its HTML.
  */
 export interface ProductSummary {
   id: string
@@ -41,6 +62,8 @@ export interface ProductSummary {
   title: string
   vendor: string
   productType: string
+  category: TaxonomyCategory | null
+  description: string
   availableForSale: boolean
   featuredImage: Image | null
   options: ProductOption[]
@@ -54,17 +77,7 @@ export interface ProductSummary {
 
 /** A single product fetched by handle, with the copy needed for its page. */
 export interface Product extends ProductSummary {
-  description: string
   descriptionHtml: string
-}
-
-export interface Collection {
-  id: string
-  handle: string
-  title: string
-  description: string
-  /** Products in this collection that have photography and will render. */
-  renderableCount: number
 }
 
 export interface CartLine {

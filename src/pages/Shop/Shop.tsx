@@ -1,12 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { ProductSummary } from '../../types/shopify'
-import { useCollections, shoppableCollections } from '../../hooks/useCollections'
 import { useShopProducts } from '../../hooks/useShopProducts'
+import {
+  buildCategories, isInCategory, PRIMARY_DEPTH, SECONDARY_DEPTH,
+  type CategoryFilter,
+} from '../../lib/categories'
 import ProductGrid from '../../components/ProductGrid/ProductGrid'
 import {
   ShopSection, Inner, ShopHeader, ShopTitle, ProductCount,
-  ControlBar, FilterBar, FilterTab, RightControls, ToggleLabel, SortSelect,
+  ControlBar, FilterBar, FilterGroup, FilterTab, TabCaret,
+  SubMenu, SubMenuPanel, SubMenuItem, SubFilterBar, SubFilterTab,
+  RightControls, SortSelect,
   StateMessage, ErrorMessage,
 } from './Shop.styles'
 
@@ -39,31 +44,106 @@ function sortProducts(products: ProductSummary[], sort: SortKey): ProductSummary
 
 export default function Shop() {
   const [sort, setSort] = useState<SortKey>('featured')
-  const [hideSoldOut, setHideSoldOut] = useState(false)
 
   /* The selected category lives in the URL rather than component state, so the
      header's category menu can link straight to it and a filtered listing can
      be shared or reached with the back button. */
   const [params, setParams] = useSearchParams()
-  const activeHandle = params.get('collection') ?? undefined
+  const activeSlug = params.get('category') ?? undefined
+  const activeSubSlug = params.get('sub') ?? undefined
 
-  function selectCollection(handle?: string) {
-    const next = new URLSearchParams(params)
-    if (handle) next.set('collection', handle)
-    else next.delete('collection')
-    setParams(next)
+  const { products, isLoading, error } = useShopProducts()
+
+  /* Only categories holding at least one listable product come back, so the
+     shop never offers a tab that opens onto an empty grid. */
+  const categories = useMemo(() => buildCategories(products, PRIMARY_DEPTH), [products])
+  const active = categories.find(c => c.slug === activeSlug)
+
+  /* Children are built for every category, not only the selected one: the
+     dropdown lets a shopper jump straight to "Skirts" from an unselected
+     "Clothing", which sets both halves of the filter at once. */
+  const subCategories = useMemo(() => {
+    const byCategory = new Map<string, CategoryFilter[]>()
+    for (const category of categories) {
+      byCategory.set(category.slug, buildCategories(products, SECONDARY_DEPTH, category.path))
+    }
+    return byCategory
+  }, [categories, products])
+
+  /* One child would only restate the category above it, so a tab earns a
+     dropdown at two or more. */
+  const childrenOf = (slug: string) => subCategories.get(slug) ?? []
+  const activeChildren = active ? childrenOf(active.slug) : []
+  const activeSub = activeChildren.find(c => c.slug === activeSubSlug)
+
+  /* Which tab's dropdown is open. A short delay on close keeps the menu up
+     while the pointer crosses from tab to panel, and lets it survive a
+     diagonal slide across a neighbouring tab. */
+  const [openSlug, setOpenSlug] = useState<string | null>(null)
+  const closeTimer = useRef<number | null>(null)
+
+  function cancelClose() {
+    if (closeTimer.current !== null) {
+      window.clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
   }
 
-  const { collections: allCollections } = useCollections()
-  const collections = shoppableCollections(allCollections)
-  const { products, isLoading, error } = useShopProducts(activeHandle)
+  function openMenu(slug: string) {
+    cancelClose()
+    setOpenSlug(slug)
+  }
+
+  function scheduleClose() {
+    cancelClose()
+    closeTimer.current = window.setTimeout(() => {
+      closeTimer.current = null
+      setOpenSlug(null)
+    }, 140)
+  }
+
+  // A pending timer must not fire into an unmounted component.
+  useEffect(() => cancelClose, [])
+
+  function select(category?: CategoryFilter) {
+    const next = new URLSearchParams(params)
+    if (category) next.set('category', category.slug)
+    else next.delete('category')
+    next.delete('sub')
+    setParams(next)
+    setOpenSlug(null)
+  }
+
+  useEffect(() => {
+    if (!openSlug) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpenSlug(null)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [openSlug])
+
+  /* Selecting a child implies its parent, so both are written together and a
+     dropdown pick works from any tab. */
+  function selectSub(category: CategoryFilter, sub?: CategoryFilter) {
+    const next = new URLSearchParams(params)
+    next.set('category', category.slug)
+    if (sub) next.set('sub', sub.slug)
+    else next.delete('sub')
+    setParams(next)
+    setOpenSlug(null)
+  }
 
   const visible = useMemo(() => {
-    const filtered = hideSoldOut ? products.filter(p => p.availableForSale) : products
+    /* A slug that no longer resolves — a category renamed or retired in the
+       admin since the link was shared — narrows nothing, so a stale URL lands
+       on the full grid rather than an empty one. */
+    const path = (activeSub ?? active)?.path
+    const filtered = path ? products.filter(p => isInCategory(p, path)) : products
     return sortProducts(filtered, sort)
-  }, [products, sort, hideSoldOut])
+  }, [products, active, activeSub, sort])
 
-  const activeTitle = collections.find(c => c.handle === activeHandle)?.title
+  const activeTitle = activeSub?.label ?? active?.label
 
   return (
     <ShopSection>
@@ -80,31 +160,68 @@ export default function Shop() {
         <ControlBar>
           <FilterBar>
             <FilterTab
-              $active={activeHandle === undefined}
-              onClick={() => selectCollection(undefined)}
+              $active={activeSlug === undefined}
+              onClick={() => select(undefined)}
             >
               All
             </FilterTab>
-            {collections.map(col => (
-              <FilterTab
-                key={col.id}
-                $active={activeHandle === col.handle}
-                onClick={() => selectCollection(col.handle)}
-              >
-                {col.title}
-              </FilterTab>
-            ))}
+            {categories.map(category => {
+              const children = childrenOf(category.slug)
+              const hasMenu = children.length > 1
+              const isOpen = openSlug === category.slug
+
+              return (
+                <FilterGroup
+                  key={category.slug}
+                  onMouseEnter={hasMenu ? () => openMenu(category.slug) : undefined}
+                  onMouseLeave={hasMenu ? scheduleClose : undefined}
+                  /* Focus bubbles here from the tab and the panel's items, so
+                     the menu opens for the keyboard too and closes only once
+                     focus has left the group entirely. */
+                  onFocus={hasMenu ? () => openMenu(category.slug) : undefined}
+                  onBlur={hasMenu ? e => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) scheduleClose()
+                  } : undefined}
+                >
+                  <FilterTab
+                    $active={activeSlug === category.slug}
+                    onClick={() => select(category)}
+                    aria-haspopup={hasMenu ? 'true' : undefined}
+                    aria-expanded={hasMenu ? isOpen : undefined}
+                  >
+                    {category.label}
+                    {hasMenu && <TabCaret aria-hidden="true" $open={isOpen} />}
+                  </FilterTab>
+
+                  {hasMenu && (
+                    <SubMenu $open={isOpen}>
+                      <SubMenuPanel role="menu" aria-label={`${category.label} categories`}>
+                        <SubMenuItem
+                          role="menuitem"
+                          $active={activeSlug === category.slug && !activeSubSlug}
+                          onClick={() => selectSub(category)}
+                        >
+                          All {category.label}
+                        </SubMenuItem>
+                        {children.map(sub => (
+                          <SubMenuItem
+                            key={sub.slug}
+                            role="menuitem"
+                            $active={activeSlug === category.slug && activeSubSlug === sub.slug}
+                            onClick={() => selectSub(category, sub)}
+                          >
+                            {sub.label}
+                          </SubMenuItem>
+                        ))}
+                      </SubMenuPanel>
+                    </SubMenu>
+                  )}
+                </FilterGroup>
+              )
+            })}
           </FilterBar>
 
           <RightControls>
-            <ToggleLabel>
-              <input
-                type="checkbox"
-                checked={hideSoldOut}
-                onChange={e => setHideSoldOut(e.target.checked)}
-              />
-              Available only
-            </ToggleLabel>
             <SortSelect
               value={sort}
               onChange={e => setSort(e.target.value as SortKey)}
@@ -117,14 +234,27 @@ export default function Shop() {
           </RightControls>
         </ControlBar>
 
+        {active && activeChildren.length > 1 && (
+          <SubFilterBar>
+            <SubFilterTab $active={!activeSub} onClick={() => selectSub(active)}>
+              All {active.label}
+            </SubFilterTab>
+            {activeChildren.map(sub => (
+              <SubFilterTab
+                key={sub.slug}
+                $active={activeSubSlug === sub.slug}
+                onClick={() => selectSub(active, sub)}
+              >
+                {sub.label}
+              </SubFilterTab>
+            ))}
+          </SubFilterBar>
+        )}
+
         {isLoading && <StateMessage>Loading the collection…</StateMessage>}
         {error && <ErrorMessage>Unable to load products. Please try again later.</ErrorMessage>}
         {!isLoading && !error && visible.length === 0 && (
-          <StateMessage>
-            {hideSoldOut
-              ? 'Everything here has found a home — uncheck “Available only” to browse the archive.'
-              : 'No items available right now — check back soon.'}
-          </StateMessage>
+          <StateMessage>No items available right now — check back soon.</StateMessage>
         )}
         {!isLoading && !error && visible.length > 0 && <ProductGrid products={visible} />}
       </Inner>

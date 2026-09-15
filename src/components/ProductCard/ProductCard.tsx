@@ -3,7 +3,8 @@ import type { ProductSummary } from '../../types/shopify'
 import { formatMoney } from '../../lib/utils'
 import { getImages, getRealOptions, getVariants, productEyebrow } from '../../lib/product'
 import {
-  CardButton, CardLink, ImageWrapper, ProductImage,
+  CardShell, CardButton, CardLink, ImageWrapper, ProductImage,
+  MediaAction, MediaActionLink, CarouselArrow,
   NoImage, NoImageMark, NoImageText, ImageBadge, ImageCount,
   CardBody, Eyebrow, ProductTitle, ProductPrice, ComparePrice,
   SizeRow, SizeChip, ExpandHint,
@@ -17,8 +18,20 @@ interface Props {
   onToggle: () => void
 }
 
+function Chevron({ direction }: { direction: 'left' | 'right' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points={direction === 'left' ? '15 18 9 12 15 6' : '9 18 15 12 9 6'} />
+    </svg>
+  )
+}
+
 export default function ProductCard({ product, isDesktop, expanded, onToggle }: Props) {
-  const [hovering, setHovering] = useState(false)
+  /* Which photo the arrows have moved to. The card used to preview the second
+     photo on hover, but with arrows on every multi-photo card that only fought
+     the shopper's own choice of where to be. */
+  const [index, setIndex] = useState(0)
 
   const images = getImages(product)
   const variants = getVariants(product)
@@ -31,8 +44,11 @@ export default function ProductCard({ product, isDesktop, expanded, onToggle }: 
   const eyebrow = productEyebrow(product)
   const sizeOption = getRealOptions(product).find(o => /size/i.test(o.name))
 
-  /* Swap to the second photo on hover, the way the reference grid does. */
-  const activeIndex = hovering && images.length > 1 ? 1 : 0
+  const hasCarousel = images.length > 1
+
+  function step(delta: number) {
+    setIndex(current => (current + delta + images.length) % images.length)
+  }
 
   const media = (
     <ImageWrapper>
@@ -43,7 +59,7 @@ export default function ProductCard({ product, isDesktop, expanded, onToggle }: 
             src={img.url}
             alt={img.altText ?? product.title}
             loading="lazy"
-            $visible={i === activeIndex}
+            $visible={i === index}
           />
         ))
       ) : (
@@ -52,8 +68,42 @@ export default function ProductCard({ product, isDesktop, expanded, onToggle }: 
           <NoImageText>Photo coming soon</NoImageText>
         </NoImage>
       )}
+
+      {/* Same destination as the body control below, so the photo stays
+          clickable now that it sits outside it. */}
+      {isDesktop ? (
+        <MediaAction type="button" tabIndex={-1} aria-hidden="true" onClick={onToggle} />
+      ) : (
+        <MediaActionLink to={`/product/${product.handle}`} tabIndex={-1} aria-hidden="true" />
+      )}
+
+      {hasCarousel && (
+        <>
+          <CarouselArrow
+            type="button"
+            $side="left"
+            aria-label={`Previous photo of ${product.title}`}
+            onClick={() => step(-1)}
+          >
+            <Chevron direction="left" />
+          </CarouselArrow>
+          <CarouselArrow
+            type="button"
+            $side="right"
+            aria-label={`Next photo of ${product.title}`}
+            onClick={() => step(1)}
+          >
+            <Chevron direction="right" />
+          </CarouselArrow>
+        </>
+      )}
+
       {!product.availableForSale && <ImageBadge>Sold</ImageBadge>}
-      {images.length > 1 && <ImageCount>1 / {images.length}</ImageCount>}
+      {hasCarousel && (
+        <ImageCount $alwaysVisible={index > 0} aria-hidden="true">
+          {index + 1} / {images.length}
+        </ImageCount>
+      )}
     </ImageWrapper>
   )
 
@@ -85,31 +135,17 @@ export default function ProductCard({ product, isDesktop, expanded, onToggle }: 
     </CardBody>
   )
 
-  // Mobile goes straight to the product page; desktop opens the inline panel.
-  if (!isDesktop) {
-    return (
-      <CardLink
-        to={`/product/${product.handle}`}
-        onMouseEnter={() => setHovering(true)}
-        onMouseLeave={() => setHovering(false)}
-      >
-        {media}
-        {body}
-      </CardLink>
-    )
-  }
-
   return (
-    <CardButton
-      type="button"
-      $expanded={expanded}
-      onClick={onToggle}
-      aria-expanded={expanded}
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
-    >
+    <CardShell>
       {media}
-      {body}
-    </CardButton>
+      {/* Mobile goes straight to the product page; desktop opens the inline panel. */}
+      {isDesktop ? (
+        <CardButton type="button" $expanded={expanded} onClick={onToggle} aria-expanded={expanded}>
+          {body}
+        </CardButton>
+      ) : (
+        <CardLink to={`/product/${product.handle}`}>{body}</CardLink>
+      )}
+    </CardShell>
   )
 }

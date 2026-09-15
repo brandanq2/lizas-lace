@@ -13,9 +13,9 @@ Self-hosted from `src/assets/fonts/`, declared with `@font-face` in
   `theme.fonts.display` must also set `font-weight: 400`.
 
 Currently applied to: hero wordmark, shop page title, Visit section heading,
-footer wordmark, password gate title. Product titles deliberately stayed on
-the interface sans — they run long and repeat down the grid — but they are a
-one-line change if you want them on the serif too.
+footer wordmark. Product titles deliberately stayed on the interface sans
+— they run long and repeat down the grid — but they are a one-line change if
+you want them on the serif too.
 
 The supplied `.otf` files are byte-for-byte TrueType (`sfnt 0x00010000`, not
 `OTTO`), so the `.ttf` versions were used and the `.otf` duplicates skipped.

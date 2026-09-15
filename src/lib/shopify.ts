@@ -1,4 +1,4 @@
-import type { Cart, Collection, Product, ProductSummary } from '../types/shopify'
+import type { Cart, CategoryFacet, Product, ProductSummary } from '../types/shopify'
 
 const DOMAIN = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN as string
 const TOKEN = import.meta.env.VITE_SHOPIFY_STOREFRONT_TOKEN as string
@@ -14,6 +14,8 @@ const PRODUCT_BASE = `
   title
   vendor
   productType
+  category { id name ancestors { id name } }
+  description
   availableForSale
   featuredImage { url altText width height }
   options { id name values }
@@ -35,8 +37,9 @@ const PRODUCT_BASE = `
   }
 `
 
-/* Grid card and inline quick view. Skips the description fields because list
-   queries walk the whole catalogue, which runs to several hundred products. */
+/* Grid card and inline quick view. Carries the plain-text description, which
+   the grid needs to tell a finished listing from an unfinished one, but not
+   the HTML, which only a product page renders. */
 const PRODUCT_CARD_FRAGMENT = `
   ${PRODUCT_BASE}
   images(first: 10) { edges { node { url altText width height } } }
@@ -46,7 +49,6 @@ const PRODUCT_CARD_FRAGMENT = `
 const PRODUCT_FRAGMENT = `
   ${PRODUCT_BASE}
   images(first: 20) { edges { node { url altText width height } } }
-  description
   descriptionHtml
 `
 
@@ -103,12 +105,19 @@ async function storefront<T>(query: string, variables?: Record<string, unknown>)
 }
 
 /**
- * Listings without photography are hidden from the grid while the catalogue
- * is being reshot. Applied to list queries only — `getProduct` still resolves
- * by handle, so any existing link keeps working.
+ * A listing is finished only once it has both photography and written copy.
+ * Much of this catalogue is mid-reshoot, and a piece photographed but not yet
+ * described is not ready to sell — so both are required rather than just the
+ * image.
+ *
+ * Applied to list queries only. `getProduct` still resolves by handle, so a
+ * link to an unfinished listing keeps working for whoever has it.
  */
-function hasImages(product: { images: { edges: unknown[] } }): boolean {
-  return product.images.edges.length > 0
+function isListable(product: {
+  images: { edges: unknown[] }
+  description: string | null
+}): boolean {
+  return product.images.edges.length > 0 && (product.description ?? '').trim().length > 0
 }
 
 const PAGE_SIZE = 250
@@ -155,27 +164,7 @@ export async function getProducts(): Promise<ProductSummary[]> {
     )
     return data.products
   })
-  return all.filter(hasImages)
-}
-
-export async function getCollectionProducts(handle: string): Promise<ProductSummary[]> {
-  const all = await paginate<ProductSummary>(async after => {
-    const data = await storefront<{
-      collection: { products: Page<ProductSummary> } | null
-    }>(
-      `query GetCollectionProducts($handle: String!, $first: Int!, $after: String) {
-        collection(handle: $handle) {
-          products(first: $first, after: $after, sortKey: CREATED, reverse: true) {
-            pageInfo { hasNextPage endCursor }
-            edges { node { ${PRODUCT_CARD_FRAGMENT} } }
-          }
-        }
-      }`,
-      { handle, first: PAGE_SIZE, after }
-    )
-    return data.collection?.products ?? null
-  })
-  return all.filter(hasImages)
+  return all.filter(isListable)
 }
 
 export async function getProduct(handle: string): Promise<Product | null> {
@@ -189,44 +178,42 @@ export async function getProduct(handle: string): Promise<Product | null> {
 }
 
 /**
- * Collections carry a count of products that will actually render, so the shop
- * can hide filter tabs that would open onto an empty grid.
+ * Just enough of every product to build the category menu: its taxonomy node
+ * and whether it would render. The header needs the category list before the
+ * shopper has asked for any products, and this is roughly a tenth the payload
+ * of walking the catalogue with the full card fragment.
  */
-export async function getCollections(first = 30): Promise<Collection[]> {
-  interface RawCollection {
-    id: string
-    handle: string
-    title: string
-    description: string
-    products: { edges: { node: { id: string; images: { edges: unknown[] } } }[] }
+export async function getCategoryFacets(): Promise<CategoryFacet[]> {
+  interface RawFacet {
+    category: CategoryFacet['category']
+    availableForSale: boolean
+    images: { edges: unknown[] }
+    description: string | null
   }
 
-  const data = await storefront<{ collections: { edges: { node: RawCollection }[] } }>(
-    `query GetCollections($first: Int!) {
-      collections(first: $first, sortKey: TITLE) {
-        edges {
-          node {
-            id
-            handle
-            title
-            description
-            products(first: ${PAGE_SIZE}) {
-              edges { node { id images(first: 1) { edges { node { url } } } } }
+  const all = await paginate<RawFacet>(async after => {
+    const data = await storefront<{ products: Page<RawFacet> }>(
+      `query GetCategoryFacets($first: Int!, $after: String) {
+        products(first: $first, after: $after) {
+          pageInfo { hasNextPage endCursor }
+          edges {
+            node {
+              availableForSale
+              description
+              images(first: 1) { edges { node { url } } }
+              category { id name ancestors { id name } }
             }
           }
         }
-      }
-    }`,
-    { first }
-  )
+      }`,
+      { first: PAGE_SIZE, after }
+    )
+    return data.products
+  })
 
-  return data.collections.edges.map(({ node }) => ({
-    id: node.id,
-    handle: node.handle,
-    title: node.title,
-    description: node.description,
-    renderableCount: node.products.edges.filter(e => hasImages(e.node)).length,
-  }))
+  return all
+    .filter(isListable)
+    .map(({ category, availableForSale }) => ({ category, availableForSale }))
 }
 
 export async function createCart(variantId: string, quantity: number): Promise<Cart> {

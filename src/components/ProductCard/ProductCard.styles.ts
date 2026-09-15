@@ -1,6 +1,18 @@
 import styled, { css } from 'styled-components'
 import { Link } from 'react-router-dom'
 
+/**
+ * The grid cell. The card's clickable element used to wrap the photo as well,
+ * but the carousel arrows have to be real buttons and a button cannot nest
+ * inside a button or an anchor — so the photo and the body are now two
+ * separate controls sitting inside this shell, which owns the hover state
+ * they used to share.
+ */
+export const CardShell = styled.div`
+  display: flex;
+  flex-direction: column;
+`
+
 /* The card is a button on desktop (opens the inline panel) and a link on
    mobile (goes straight to the product page), so the shared visual styles
    live in a mixin applied to both. */
@@ -38,6 +50,73 @@ export const ImageWrapper = styled.div`
   aspect-ratio: 3 / 4;
   background-color: ${({ theme }) => theme.colors.tint};
   overflow: hidden;
+`
+
+/**
+ * Covers the photo and carries the same action as the body control. Kept out
+ * of the tab order and hidden from assistive tech: the body control already
+ * exposes the product's name and destination, so a second stop here would
+ * just be a duplicate with no label of its own.
+ */
+const mediaActionBase = css`
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  appearance: none;
+`
+
+export const MediaAction = styled.button`
+  ${mediaActionBase}
+`
+
+export const MediaActionLink = styled(Link)`
+  ${mediaActionBase}
+`
+
+/** Previous/next photo. Sits above MediaAction so taps reach it first. */
+export const CarouselArrow = styled.button<{ $side: 'left' | 'right' }>`
+  position: absolute;
+  top: 50%;
+  ${({ $side }) => $side}: 0.5rem;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(254, 253, 254, 0.88);
+  color: ${({ theme }) => theme.colors.ink};
+  box-shadow: 0 0.125rem 0.5rem rgba(35, 31, 32, 0.16);
+  transition: opacity 200ms ease, background-color 200ms ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.white};
+  }
+
+  svg {
+    width: 0.6875rem;
+    height: 0.6875rem;
+  }
+
+  /* On a touchscreen there is no hover to reveal them, so they stay put.
+     Where a pointer exists they fade in with the card. */
+  @media (hover: hover) {
+    opacity: 0;
+
+    ${CardShell}:hover &,
+    &:focus-visible {
+      opacity: 1;
+    }
+  }
 `
 
 export const ProductImage = styled.img<{ $visible: boolean }>`
@@ -91,17 +170,18 @@ export const ImageBadge = styled.span`
   padding: 0.375rem 0.75rem;
 `
 
-export const ImageCount = styled.span`
+export const ImageCount = styled.span<{ $alwaysVisible: boolean }>`
   position: absolute;
   right: 0.75rem;
   top: 0.75rem;
+  z-index: 2;
   background: rgba(255, 253, 249, 0.9);
   color: ${({ theme }) => theme.colors.ink};
   font-family: ${({ theme }) => theme.fonts.sans};
   font-size: 0.6875rem;
   font-variant-numeric: tabular-nums;
   padding: 0.125rem 0.4375rem;
-  opacity: 0;
+  opacity: ${({ $alwaysVisible }) => ($alwaysVisible ? 1 : 0)};
   transition: opacity 200ms ease;
 
   ${ImageWrapper}:hover & {
@@ -177,7 +257,7 @@ export const ExpandHint = styled.span<{ $expanded: boolean }>`
     opacity: ${({ $expanded }) => ($expanded ? 1 : 0)};
     transition: opacity 200ms ease;
 
-    ${CardButton}:hover & {
+    ${CardShell}:hover & {
       opacity: 1;
     }
   }

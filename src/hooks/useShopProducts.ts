@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ProductSummary } from '../types/shopify'
-import { getProducts, getCollectionProducts } from '../lib/shopify'
+import { getProducts } from '../lib/shopify'
 
 interface UseShopProductsResult {
   products: ProductSummary[]
@@ -8,7 +8,13 @@ interface UseShopProductsResult {
   error: string | null
 }
 
-export function useShopProducts(collectionHandle?: string): UseShopProductsResult {
+/**
+ * Every renderable product, in one read. Category filtering happens in memory
+ * rather than server-side: the Storefront API can only narrow a product query
+ * by collection, not by taxonomy category, and at this catalogue size one
+ * paginated read beats a round trip per tab.
+ */
+export function useShopProducts(): UseShopProductsResult {
   const [products, setProducts] = useState<ProductSummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -18,11 +24,7 @@ export function useShopProducts(collectionHandle?: string): UseShopProductsResul
     setIsLoading(true)
     setError(null)
 
-    const fetch = collectionHandle
-      ? getCollectionProducts(collectionHandle)
-      : getProducts()
-
-    fetch
+    getProducts()
       .then(data => {
         if (!cancelled) {
           setProducts(data)
@@ -37,7 +39,7 @@ export function useShopProducts(collectionHandle?: string): UseShopProductsResul
       })
 
     return () => { cancelled = true }
-  }, [collectionHandle])
+  }, [])
 
   return { products, isLoading, error }
 }

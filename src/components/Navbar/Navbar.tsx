@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
-import { useCollections, shoppableCollections } from '../../hooks/useCollections'
+import { useCategories } from '../../hooks/useCategories'
 import {
   Nav, Bar, NavInner, HomeLink, NavGroup, BrandSlot, BrandRouterLink, BrandMark, BrandFallback,
   GlobeShopButton, ShopMenu, ShopMenuItem, ShopMenuNote,
@@ -13,16 +13,15 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [shopOpen, setShopOpen] = useState(false)
-  /* Latches the first time either menu opens, so the collections request
-     fires once and lazily rather than on every page load. Both menus need it:
-     the globe is desktop-only, so on mobile the hamburger is what asks. */
+/* Latches the first time either menu opens, so the category request fires
+     once and lazily rather than on every page load. Both menus need it: the
+     globe is desktop-only, so on mobile the hamburger is what asks. */
   const [categoriesNeeded, setCategoriesNeeded] = useState(false)
   const shopRef = useRef<HTMLDivElement>(null)
   const { totalQuantity, openDrawer } = useCart()
   const { pathname } = useLocation()
 
-  const { collections, isLoading: loadingCategories } = useCollections(30, categoriesNeeded)
-  const categories = shoppableCollections(collections)
+  const { categories, isLoading: loadingCategories } = useCategories(categoriesNeeded)
 
   /* The header is transparent, so this is what fades in the frosted panel
      behind the links once content starts passing underneath them. */
@@ -101,12 +100,12 @@ export default function Navbar() {
                 </ShopMenuItem>
                 {categories.map(c => (
                   <ShopMenuItem
-                    key={c.id}
-                    to={`/shop?collection=${encodeURIComponent(c.handle)}`}
+                    key={c.slug}
+                    to={`/shop?category=${encodeURIComponent(c.slug)}`}
                     role="menuitem"
                     onClick={() => setShopOpen(false)}
                   >
-                    {c.title}
+                    {c.label}
                   </ShopMenuItem>
                 ))}
                 {loadingCategories && <ShopMenuNote>Loading categories…</ShopMenuNote>}
@@ -155,11 +154,11 @@ export default function Navbar() {
         <MobileNavLink to="/shop" end onClick={closeMenu}>Shop</MobileNavLink>
         {categories.map(c => (
           <MobileNavLink
-            key={c.id}
-            to={`/shop?collection=${encodeURIComponent(c.handle)}`}
+            key={c.slug}
+            to={`/shop?category=${encodeURIComponent(c.slug)}`}
             onClick={closeMenu}
           >
-            {c.title}
+            {c.label}
           </MobileNavLink>
         ))}
       </MobileMenu>
