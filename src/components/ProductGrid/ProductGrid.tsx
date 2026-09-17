@@ -48,7 +48,14 @@ export default function ProductGrid({ products }: Props) {
             }
           />
           {i === insertAfter && expandedProduct && (
-            <InlinePdp product={expandedProduct} onClose={() => setExpandedId(null)} />
+            /* Keyed so opening a different card in the same row rebuilds the
+               panel rather than reusing it with the previous product's
+               gallery position and selected size still in place. */
+            <InlinePdp
+              key={expandedProduct.id}
+              product={expandedProduct}
+              onClose={() => setExpandedId(null)}
+            />
           )}
         </Fragment>
       ))}

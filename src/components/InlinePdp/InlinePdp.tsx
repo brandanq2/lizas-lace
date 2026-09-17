@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ProductSummary } from '../../types/shopify'
+import type { ProductSummary, ProductVariant } from '../../types/shopify'
 import { formatMoney } from '../../lib/utils'
-import { getImages, getVariants } from '../../lib/product'
+import { getImages, getVariants, variantImageIndex } from '../../lib/product'
 import BuyPanel from '../BuyPanel/BuyPanel'
 import {
   Panel, CloseButton, Gallery, MainImageLink, MainImage, MainPlaceholder, PlaceholderMark,
@@ -27,8 +27,12 @@ export default function InlinePdp({ product, onClose }: Props) {
   const price = variants[0]?.price ?? product.priceRange.minVariantPrice
   const to = `/product/${product.handle}`
 
-  // Reset the gallery when a different product opens in the same slot.
-  useEffect(() => { setIndex(0) }, [product.id])
+  /* Follow the buy panel's selection to that variant's own photo. An unmapped
+     variant reports -1 and leaves the gallery alone. */
+  function showVariant(variant: ProductVariant | undefined) {
+    const target = variantImageIndex(product, variant)
+    if (target >= 0) setIndex(target)
+  }
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -82,7 +86,7 @@ export default function InlinePdp({ product, onClose }: Props) {
         <Price>{formatMoney(price)}</Price>
         {product.vendor && <Vendor>By {product.vendor}</Vendor>}
 
-        <BuyPanel product={product} />
+        <BuyPanel product={product} onVariantChange={showVariant} />
 
         <ViewDetails to={to}>View details &rsaquo;</ViewDetails>
       </Details>

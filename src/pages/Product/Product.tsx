@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import type { ProductVariant } from '../../types/shopify'
 import { useProduct } from '../../hooks/useProduct'
 import { formatMoney } from '../../lib/utils'
-import { getImages, getVariants } from '../../lib/product'
+import { getImages, getVariants, variantImageIndex } from '../../lib/product'
 import BuyPanel from '../../components/BuyPanel/BuyPanel'
 import ProductGallery from '../../components/ProductGallery/ProductGallery'
 import {
@@ -14,6 +15,7 @@ import {
 export default function Product() {
   const { handle = '' } = useParams<{ handle: string }>()
   const { product, isLoading, error } = useProduct(handle)
+  const [variant, setVariant] = useState<ProductVariant | undefined>()
 
   // Arriving from the grid keeps the previous scroll offset otherwise.
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [handle])
@@ -56,7 +58,11 @@ export default function Product() {
         </Breadcrumb>
 
         <Layout>
-          <ProductGallery images={images} title={product.title} />
+          <ProductGallery
+            images={images}
+            title={product.title}
+            focusIndex={variantImageIndex(product, variant)}
+          />
 
           <Details>
             <Title>{product.title}</Title>
@@ -68,7 +74,7 @@ export default function Product() {
 
             <Rule />
 
-            <BuyPanel product={product} />
+            <BuyPanel product={product} onVariantChange={setVariant} />
 
             {product.availableForSale && (
               <Pickup>

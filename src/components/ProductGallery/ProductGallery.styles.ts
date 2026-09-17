@@ -6,8 +6,10 @@ export const Gallery = styled.div`
 `
 
 /**
- * Below 640px this is a snap track showing one photo per screen; above it the
- * two-column grid the desktop layout has always used.
+ * One photo at a time at every size: swiped on a touchscreen, driven by the
+ * arrows on a pointer. It used to become a two-column grid above 640px, which
+ * meant the page grew a column of thumbnails-that-were-not-thumbnails and no
+ * single photo was ever shown large.
  *
  * The swipe is deliberately the browser's own. A scroll container gets the
  * gesture, the momentum and the snap right for free, keeps working with a
@@ -23,17 +25,57 @@ export const Track = styled.div`
   margin: 0 -1.25rem;
 
   @media (min-width: 640px) {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-    overflow: visible;
     margin: 0;
+  }
+`
+
+/**
+ * Previous/next photo. A pointer gets these; a touchscreen gets the swipe and
+ * the dots instead, so they stay hidden at the sizes where the gesture is the
+ * natural way through. Clamped rather than wrapping: smooth-scrolling a snap
+ * track from the last photo back to the first races past everything between.
+ */
+export const GalleryArrow = styled.button<{ $side: 'left' | 'right' }>`
+  display: none;
+
+  @media (min-width: 640px) {
+    position: absolute;
+    top: 50%;
+    ${({ $side }) => $side}: 0.75rem;
+    transform: translateY(-50%);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.375rem;
+    height: 2.375rem;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    background: rgba(254, 253, 254, 0.9);
+    color: ${({ theme }) => theme.colors.ink};
+    box-shadow: 0 0.125rem 0.625rem rgba(35, 31, 32, 0.18);
+    transition: background-color 200ms ease, opacity 200ms ease;
+
+    &:hover:not(:disabled) {
+      background: ${({ theme }) => theme.colors.white};
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    svg {
+      width: 0.8125rem;
+      height: 0.8125rem;
+    }
   }
 `
 
 export const Slide = styled.div`
   position: relative;
-  /* Inert once the grid takes over. */
   ${snapSlide}
   aspect-ratio: 3 / 4;
   background: ${({ theme }) => theme.colors.tint};
@@ -47,22 +89,17 @@ export const SlideImage = styled.img`
   object-fit: cover;
 `
 
-/* Both indicators belong to the swipe track only — the grid shows every
-   photo at once, so there is no position to report. */
 export const Counter = styled.span`
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
+  z-index: 2;
   background: rgba(254, 253, 254, 0.9);
   color: ${({ theme }) => theme.colors.ink};
   font-family: ${({ theme }) => theme.fonts.sans};
   font-size: 0.6875rem;
   font-variant-numeric: tabular-nums;
   padding: 0.1875rem 0.5rem;
-
-  @media (min-width: 640px) {
-    display: none;
-  }
 `
 
 export const Dots = styled.div`
@@ -70,10 +107,6 @@ export const Dots = styled.div`
   justify-content: center;
   gap: 0.4375rem;
   margin-top: 0.875rem;
-
-  @media (min-width: 640px) {
-    display: none;
-  }
 `
 
 export const Dot = styled.button<{ $active: boolean }>`

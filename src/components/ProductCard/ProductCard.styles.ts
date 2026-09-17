@@ -247,14 +247,6 @@ export const CardBody = styled.div`
   padding: 0.875rem 0 0;
 `
 
-export const Eyebrow = styled.span`
-  font-family: ${({ theme }) => theme.fonts.sans};
-  font-size: 0.8125rem;
-  color: ${({ theme }) => theme.colors.muted};
-  text-decoration: underline;
-  text-underline-offset: 2px;
-`
-
 export const ProductTitle = styled.h3`
   font-family: ${({ theme }) => theme.fonts.sans};
   font-size: 0.9375rem;

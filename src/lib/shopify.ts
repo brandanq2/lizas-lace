@@ -28,6 +28,7 @@ const PRODUCT_BASE = `
         price { amount currencyCode }
         compareAtPrice { amount currencyCode }
         selectedOptions { name value }
+        image { url altText width height }
       }
     }
   }

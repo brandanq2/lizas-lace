@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import type { ProductSummary } from '../../types/shopify'
 import { formatMoney } from '../../lib/utils'
-import { getImages, getRealOptions, getVariants, productEyebrow } from '../../lib/product'
+import { getImages, getRealOptions, getVariants } from '../../lib/product'
 import { useSnapCarousel } from '../../hooks/useSnapCarousel'
+import Chevron from '../icons/Chevron'
 import {
   CardShell, CardButton, CardLink, ImageWrapper, ProductImage,
   MediaAction, MediaActionLink, CarouselArrow,
   CardTrack, CardSlide, CardDots, CardDot,
   NoImage, NoImageMark, NoImageText, ImageBadge, ImageCount,
-  CardBody, Eyebrow, ProductTitle, ProductPrice, ComparePrice,
+  CardBody, ProductTitle, ProductPrice, ComparePrice,
   SizeRow, SizeChip, ExpandHint,
 } from './ProductCard.styles'
 
@@ -18,15 +19,6 @@ interface Props {
   isDesktop: boolean
   expanded: boolean
   onToggle: () => void
-}
-
-function Chevron({ direction }: { direction: 'left' | 'right' }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points={direction === 'left' ? '15 18 9 12 15 6' : '9 18 15 12 9 6'} />
-    </svg>
-  )
 }
 
 export default function ProductCard({ product, isDesktop, expanded, onToggle }: Props) {
@@ -48,7 +40,6 @@ export default function ProductCard({ product, isDesktop, expanded, onToggle }: 
   const showCompare =
     compareAt != null && parseFloat(compareAt.amount) > parseFloat(price.amount)
 
-  const eyebrow = productEyebrow(product)
   const sizeOption = getRealOptions(product).find(o => /size/i.test(o.name))
 
   const hasCarousel = images.length > 1
@@ -148,7 +139,6 @@ export default function ProductCard({ product, isDesktop, expanded, onToggle }: 
 
   const body = (
     <CardBody>
-      {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
       <ProductTitle>{product.title}</ProductTitle>
       <ProductPrice>
         {formatMoney(price)}

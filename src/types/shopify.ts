@@ -28,6 +28,8 @@ export interface ProductVariant {
   price: Money
   compareAtPrice: Money | null
   selectedOptions: SelectedOption[]
+  /** The photo Shopify has mapped to this variant, if the admin set one. */
+  image: Image | null
 }
 
 /**

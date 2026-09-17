@@ -62,9 +62,18 @@ export function availableValues(
   return available
 }
 
-/** Small line above the product title — vendor unless it is the house label. */
-export function productEyebrow(product: ProductSummary): string | null {
-  if (product.vendor && product.vendor !== "Liza's Lace") return product.vendor
-  if (product.productType) return product.productType
-  return null
+/**
+ * Where the variant's own photo sits in the product's gallery, or -1 if the
+ * admin has not mapped one. Selecting a colour is supposed to show that
+ * colour, which only works when someone has attached the right photo to the
+ * variant in Shopify — so an unmapped variant deliberately leaves the gallery
+ * where the shopper put it rather than snapping it somewhere arbitrary.
+ */
+export function variantImageIndex(
+  product: ProductSummary,
+  variant: ProductVariant | undefined
+): number {
+  const url = variant?.image?.url
+  if (!url) return -1
+  return getImages(product).findIndex(img => img.url === url)
 }

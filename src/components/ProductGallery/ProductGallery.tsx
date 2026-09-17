@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import type { Image } from '../../types/shopify'
 import { useSnapCarousel } from '../../hooks/useSnapCarousel'
+import Chevron from '../icons/Chevron'
 import {
-  Gallery, Track, Slide, SlideImage, Counter, Dots, Dot,
+  Gallery, Track, Slide, SlideImage, GalleryArrow, Counter, Dots, Dot,
   Placeholder, PlaceholderMark, PlaceholderText,
 } from './ProductGallery.styles'
 
@@ -9,10 +11,20 @@ interface Props {
   images: Image[]
   /** Fallback alt text when a photo has none of its own. */
   title: string
+  /**
+   * Photo to bring into view, when something outside the gallery decides —
+   * currently the buy panel, following a selected variant to its own image.
+   * Ignored when negative, which is what an unmapped variant reports.
+   */
+  focusIndex?: number
 }
 
-export default function ProductGallery({ images, title }: Props) {
+export default function ProductGallery({ images, title, focusIndex }: Props) {
   const { trackRef, index, onScroll, goTo } = useSnapCarousel(images.length)
+
+  useEffect(() => {
+    if (focusIndex !== undefined && focusIndex >= 0) goTo(focusIndex)
+  }, [focusIndex, goTo])
 
   if (images.length === 0) {
     return (
@@ -24,6 +36,8 @@ export default function ProductGallery({ images, title }: Props) {
       </Gallery>
     )
   }
+
+  const hasMore = images.length > 1
 
   return (
     <Gallery>
@@ -40,11 +54,31 @@ export default function ProductGallery({ images, title }: Props) {
         ))}
       </Track>
 
-      {images.length > 1 && (
+      {hasMore && (
         <>
+          <GalleryArrow
+            type="button"
+            $side="left"
+            onClick={() => goTo(index - 1)}
+            disabled={index === 0}
+            aria-label="Previous photo"
+          >
+            <Chevron direction="left" />
+          </GalleryArrow>
+          <GalleryArrow
+            type="button"
+            $side="right"
+            onClick={() => goTo(index + 1)}
+            disabled={index === images.length - 1}
+            aria-label="Next photo"
+          >
+            <Chevron direction="right" />
+          </GalleryArrow>
+
           <Counter aria-hidden="true">
             {index + 1} / {images.length}
           </Counter>
+
           <Dots aria-label="Product photos">
             {images.map((img, i) => (
               <Dot
