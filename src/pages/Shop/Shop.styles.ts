@@ -201,39 +201,92 @@ export const SubMenuItem = styled.button<{ $active: boolean }>`
 `
 
 /**
- * The touch fallback for the dropdown: the selected category's children laid
- * out inline. Hover has no equivalent on a touchscreen, and the narrow filter
- * bar scrolls horizontally, so there is nowhere for a panel to go.
+ * The touch fallback for the dropdown: the selected category's children as a
+ * row of chips. Hover has no equivalent on a touchscreen, and the narrow
+ * filter bar scrolls horizontally, so there is nowhere for a panel to go.
+ *
+ * One line that scrolls rather than a block that wraps, so the grid starts at
+ * the same height whether a category has three children or twelve. The row
+ * bleeds to both screen edges — a chip cut off flush with the edge is part of
+ * how a scroller announces itself, and stopping short of it instead just
+ * looks like a ragged margin.
  */
-export const SubFilterBar = styled.div`
+export const SubFilterBar = styled.div<{ $fadeStart: boolean; $fadeEnd: boolean }>`
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.25rem;
-  margin-top: 0.875rem;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  /* Vertical padding carries the focus ring, which a scroller would
+     otherwise clip. */
+  margin: -0.5rem -1.25rem 1.75rem;
+  padding: 0.5rem 1.25rem;
+  scroll-padding: 0 1.25rem;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Only the overflowing side fades, so a row that fits is left alone. */
+  ${({ $fadeStart, $fadeEnd }) => {
+    const start = $fadeStart ? '2.25rem' : '0px'
+    const end = $fadeEnd ? '2.25rem' : '0px'
+    const gradient =
+      'linear-gradient(to right, transparent, #000 ' + start +
+      ', #000 calc(100% - ' + end + '), transparent)'
+    return `-webkit-mask-image: ${gradient}; mask-image: ${gradient};`
+  }}
+
+  @media (min-width: 768px) {
+    margin-inline: -2.5rem;
+    padding-inline: 2.5rem;
+    scroll-padding: 0 2.5rem;
+  }
 
   @media (min-width: 900px) and (hover: hover) {
     display: none;
   }
 `
 
+/**
+ * A pill rather than the bare underlined text this row used to be: it gives
+ * the row a 40px touch target, and it stops the refinement from reading as a
+ * second rank of the uppercase tabs above it.
+ */
 export const SubFilterTab = styled.button<{ $active: boolean }>`
-  flex-shrink: 0;
-  padding: 0;
-  background: none;
-  border: none;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.5rem;
+  padding: 0 0.9375rem;
+  border-radius: 999px;
   cursor: pointer;
   font-family: ${({ theme }) => theme.fonts.sans};
-  font-size: 0.6875rem;
-  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: ${({ theme, $active }) => ($active ? theme.colors.pinkDeep : theme.colors.muted)};
-  text-decoration: ${({ $active }) => ($active ? 'underline' : 'none')};
-  text-underline-offset: 0.25rem;
-  transition: color 200ms;
+  white-space: nowrap;
+  border: 1px solid
+    ${({ theme, $active }) => ($active ? theme.colors.pinkDeep : theme.colors.line)};
+  background: ${({ theme, $active }) =>
+    $active ? theme.colors.pinkDeep : theme.colors.white};
+  color: ${({ theme, $active }) => ($active ? theme.colors.white : theme.colors.muted)};
+  transition: background-color 180ms, border-color 180ms, color 180ms;
 
   &:hover {
-    color: ${({ theme }) => theme.colors.pinkDeep};
+    border-color: ${({ theme, $active }) =>
+      $active ? theme.colors.pinkDeep : theme.colors.pink};
+    color: ${({ theme, $active }) => ($active ? theme.colors.white : theme.colors.ink)};
   }
+`
+
+/** How many pieces the chip leads to — a tally, so it stays lighter. */
+export const SubFilterCount = styled.span`
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0.6;
 `
 
 export const RightControls = styled.div`

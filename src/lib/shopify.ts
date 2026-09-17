@@ -106,10 +106,15 @@ async function storefront<T>(query: string, variables?: Record<string, unknown>)
 }
 
 /**
- * A listing is finished only once it has both photography and written copy.
- * Much of this catalogue is mid-reshoot, and a piece photographed but not yet
- * described is not ready to sell — so both are required rather than just the
- * image.
+ * A listing is finished only once it has photography, written copy and a
+ * price. Much of this catalogue is mid-reshoot, and a piece photographed but
+ * not yet described or priced is not ready to sell — so all three are
+ * required rather than just the image.
+ *
+ * The price gate is on the *minimum* variant price, so a product is withheld
+ * if any of its variants is still at zero rather than only when all of them
+ * are: a card shows one price, and reaching the page to find a free variant
+ * in the picker is the same unfinished listing either way.
  *
  * Applied to list queries only. `getProduct` still resolves by handle, so a
  * link to an unfinished listing keeps working for whoever has it.
@@ -117,8 +122,17 @@ async function storefront<T>(query: string, variables?: Record<string, unknown>)
 function isListable(product: {
   images: { edges: unknown[] }
   description: string | null
+  priceRange: { minVariantPrice: { amount: string } }
 }): boolean {
-  return product.images.edges.length > 0 && (product.description ?? '').trim().length > 0
+  /* Money comes back as a decimal string. A value Shopify cannot parse is
+     treated as unpriced rather than assumed good. */
+  const price = parseFloat(product.priceRange.minVariantPrice.amount)
+  return (
+    product.images.edges.length > 0 &&
+    (product.description ?? '').trim().length > 0 &&
+    Number.isFinite(price) &&
+    price > 0
+  )
 }
 
 const PAGE_SIZE = 250
@@ -190,6 +204,7 @@ export async function getCategoryFacets(): Promise<CategoryFacet[]> {
     availableForSale: boolean
     images: { edges: unknown[] }
     description: string | null
+    priceRange: { minVariantPrice: { amount: string } }
   }
 
   const all = await paginate<RawFacet>(async after => {
@@ -201,6 +216,7 @@ export async function getCategoryFacets(): Promise<CategoryFacet[]> {
             node {
               availableForSale
               description
+              priceRange { minVariantPrice { amount } }
               images(first: 1) { edges { node { url } } }
               category { id name ancestors { id name } }
             }

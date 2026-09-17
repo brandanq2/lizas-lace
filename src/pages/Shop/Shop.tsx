@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { ProductSummary } from '../../types/shopify'
 import { useShopProducts } from '../../hooks/useShopProducts'
+import { useOverflowEdges } from '../../hooks/useOverflowEdges'
 import {
   buildCategories, isInCategory, PRIMARY_DEPTH, SECONDARY_DEPTH,
   type CategoryFilter,
@@ -10,7 +11,7 @@ import ProductGrid from '../../components/ProductGrid/ProductGrid'
 import {
   ShopSection, Inner, ShopHeader, ShopTitle, ProductCount,
   ControlBar, FilterBar, FilterGroup, FilterTab, TabCaret,
-  SubMenu, SubMenuPanel, SubMenuItem, SubFilterBar, SubFilterTab,
+  SubMenu, SubMenuPanel, SubMenuItem, SubFilterBar, SubFilterTab, SubFilterCount,
   RightControls, SortSelect,
   StateMessage, ErrorMessage,
 } from './Shop.styles'
@@ -134,6 +135,10 @@ export default function Shop() {
     setOpenSlug(null)
   }
 
+  /* The refinement chips scroll sideways on a touchscreen, so the row needs
+     to know which of its edges still has chips hidden behind it. */
+  const subRow = useOverflowEdges()
+
   const visible = useMemo(() => {
     /* A slug that no longer resolves — a category renamed or retired in the
        admin since the link was shared — narrows nothing, so a stale URL lands
@@ -235,9 +240,15 @@ export default function Shop() {
         </ControlBar>
 
         {active && activeChildren.length > 1 && (
-          <SubFilterBar>
+          <SubFilterBar
+            ref={subRow.trackRef}
+            onScroll={subRow.onScroll}
+            $fadeStart={!subRow.atStart}
+            $fadeEnd={!subRow.atEnd}
+          >
             <SubFilterTab $active={!activeSub} onClick={() => selectSub(active)}>
               All {active.label}
+              <SubFilterCount>{active.count}</SubFilterCount>
             </SubFilterTab>
             {activeChildren.map(sub => (
               <SubFilterTab
@@ -246,6 +257,7 @@ export default function Shop() {
                 onClick={() => selectSub(active, sub)}
               >
                 {sub.label}
+                <SubFilterCount>{sub.count}</SubFilterCount>
               </SubFilterTab>
             ))}
           </SubFilterBar>
